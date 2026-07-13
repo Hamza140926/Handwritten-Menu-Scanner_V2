@@ -110,9 +110,7 @@ Key principles:
 
 Contributions are welcome. Please review the code analysis reports in `docs/` to understand current priorities and code quality standards.
 
-## License
 
-[Add your license here]
 
 ---
 
