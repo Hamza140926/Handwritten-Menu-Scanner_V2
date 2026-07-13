@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model weights / checkpoints
+*.pt
+*.pth
+*.bin
+*.safetensors
+checkpoints/
+*-finetuned-*/
+
+# Data / images (adjust as needed once real data is added)
+data/samples/*
+!data/samples/.gitkeep
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
