@@ -31,6 +31,7 @@ This feeds into postprocess.py (price/currency parsing).
 import cv2
 import numpy as np
 import torch
+import threading
 
 MODEL_CHECKPOINT = "microsoft/trocr-base-handwritten"
 
@@ -43,6 +44,7 @@ print(f"[recognition] Using model checkpoint: {MODEL_CHECKPOINT}")
 _processor = None  # lazy-loaded singletons so weights load once, not per call
 _model = None
 _device = None
+_model_lock = threading.Lock()  # thread-safe initialization
 
 
 def _get_model():
@@ -50,24 +52,31 @@ def _get_model():
 
     Runs on GPU if available (fp16, to fit 4GB VRAM per the spec's
     compute plan), otherwise falls back to CPU fp32.
+
+    Thread-safe: Multiple simultaneous calls will wait for initialization
+    to complete rather than creating duplicate model instances.
     """
     global _processor, _model, _device
     if _model is None:
-        from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+        with _model_lock:
+            # Double-check locking pattern: another thread might have
+            # initialized while we were waiting for the lock
+            if _model is None:
+                from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 
-        _device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"[recognition] Loading {MODEL_CHECKPOINT} on {_device}...")
+                _device = "cuda" if torch.cuda.is_available() else "cpu"
+                print(f"[recognition] Loading {MODEL_CHECKPOINT} on {_device}...")
 
-        _processor = TrOCRProcessor.from_pretrained(MODEL_CHECKPOINT)
-        _model = VisionEncoderDecoderModel.from_pretrained(MODEL_CHECKPOINT)
+                _processor = TrOCRProcessor.from_pretrained(MODEL_CHECKPOINT)
+                _model = VisionEncoderDecoderModel.from_pretrained(MODEL_CHECKPOINT)
 
-        if _device == "cuda":
-            _model = _model.half().to(_device)
-        else:
-            _model = _model.to(_device)
-        _model.eval()
+                if _device == "cuda":
+                    _model = _model.half().to(_device)
+                else:
+                    _model = _model.to(_device)
+                _model.eval()
 
-        print(f"[recognition] Model loaded. Checkpoint confirmed: {_model.name_or_path}")
+                print(f"[recognition] Model loaded. Checkpoint confirmed: {_model.name_or_path}")
 
     return _processor, _model, _device
 

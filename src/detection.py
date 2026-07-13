@@ -25,8 +25,10 @@ needed).
 
 import cv2
 import numpy as np
+import threading
 
 _detector = None  # lazy-loaded singleton so the model loads once, not per call
+_detector_lock = threading.Lock()  # thread-safe initialization
 
 
 def _get_detector():
@@ -37,23 +39,30 @@ def _get_detector():
     need at this stage). This replaced the older PaddleOCR(det=, rec=)
     pipeline-style API from 2.x.
 
+    Thread-safe: Multiple simultaneous calls will wait for initialization
+    to complete rather than creating duplicate detector instances.
+
     Defaults to CPU. If you've installed paddlepaddle-gpu (matching your
     CUDA version) instead of the plain CPU build, pass device="gpu:0" to
     detect_text_regions() to use it.
     """
     global _detector
     if _detector is None:
-        from paddleocr import TextDetection
-        # "mobile" model: smaller/faster, good fit for a 4GB GPU or CPU.
-        # Swap to "PP-OCRv5_server_det" for higher accuracy if your
-        # hardware handles it comfortably.
-        #
-        # enable_mkldnn=False works around a known bug in PaddlePaddle
-        # 3.3.x's CPU inference backend (oneDNN/PIR executor) that throws
-        # "NotImplementedError: ConvertPirAttribute2RuntimeAttribute not
-        # support [...]" on CPU inference with MKL-DNN enabled (the
-        # default). See: github.com/PaddlePaddle/Paddle/issues/77340
-        _detector = TextDetection(model_name="PP-OCRv5_mobile_det", enable_mkldnn=False)
+        with _detector_lock:
+            # Double-check locking pattern: another thread might have
+            # initialized while we were waiting for the lock
+            if _detector is None:
+                from paddleocr import TextDetection
+                # "mobile" model: smaller/faster, good fit for a 4GB GPU or CPU.
+                # Swap to "PP-OCRv5_server_det" for higher accuracy if your
+                # hardware handles it comfortably.
+                #
+                # enable_mkldnn=False works around a known bug in PaddlePaddle
+                # 3.3.x's CPU inference backend (oneDNN/PIR executor) that throws
+                # "NotImplementedError: ConvertPirAttribute2RuntimeAttribute not
+                # support [...]" on CPU inference with MKL-DNN enabled (the
+                # default). See: github.com/PaddlePaddle/Paddle/issues/77340
+                _detector = TextDetection(model_name="PP-OCRv5_mobile_det", enable_mkldnn=False)
     return _detector
 
 
