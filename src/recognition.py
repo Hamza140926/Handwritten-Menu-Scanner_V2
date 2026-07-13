@@ -150,6 +150,10 @@ def recognize_regions(regions: list, batch_size: int = 8) -> list:
         with torch.no_grad():
             generated = model.generate(
                 pixel_values,
+                max_new_tokens=32,  # explicit, so longer lines (e.g. a long
+                                    # item name plus a price, like "Couscous
+                                    # 12.500") don't get silently truncated
+                                    # at the model's default of 20
                 output_scores=True,
                 return_dict_in_generate=True,
             )
