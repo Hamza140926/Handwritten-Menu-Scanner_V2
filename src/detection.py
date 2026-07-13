@@ -26,6 +26,9 @@ needed).
 import cv2
 import numpy as np
 import threading
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 _detector = None  # lazy-loaded singleton so the model loads once, not per call
 _detector_lock = threading.Lock()  # thread-safe initialization
@@ -62,7 +65,9 @@ def _get_detector():
                 # "NotImplementedError: ConvertPirAttribute2RuntimeAttribute not
                 # support [...]" on CPU inference with MKL-DNN enabled (the
                 # default). See: github.com/PaddlePaddle/Paddle/issues/77340
+                logger.info("Initializing PaddleOCR text detector")
                 _detector = TextDetection(model_name="PP-OCRv5_mobile_det", enable_mkldnn=False)
+                logger.info("PaddleOCR text detector loaded successfully")
     return _detector
 
 
@@ -143,6 +148,7 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = 200) -> list:
             "box":  the original 4 corner points in the source image
             "y":    approximate vertical center, used for sorting
     """
+    logger.debug("Starting text detection", extra={"min_box_area": min_box_area})
     detector = _get_detector()
     output = detector.predict(input=image, batch_size=1)
 
@@ -150,6 +156,7 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = 200) -> list:
     # passed one image, so take the first (only) result.
     result_item = next(iter(output))
     raw_boxes = _extract_polygons(result_item)
+    logger.debug("Raw detection complete", extra={"raw_boxes_count": len(raw_boxes)})
 
     regions = []
     for box in raw_boxes:
@@ -177,6 +184,8 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = 200) -> list:
     # sort, not a guarantee — downstream (recognition + review UI) should
     # not hard-depend on perfect ordering.
     regions.sort(key=lambda r: (round(r["y"] / 20), r["x"]))
+    
+    logger.info("Text detection complete", extra={"regions_found": len(regions), "filtered_out": len(raw_boxes) - len(regions)})
 
     return regions
 
@@ -198,8 +207,12 @@ if __name__ == "__main__":
     import os
     sys.path.insert(0, os.path.dirname(__file__))
     from preprocessing import preprocess_image
+    from logging_config import setup_logging
+    
+    setup_logging(level="INFO")
 
     if len(sys.argv) != 2:
+        logger.error("Missing image path argument")
         print("Usage: python detection.py <path_to_image>")
         sys.exit(1)
 
@@ -207,13 +220,12 @@ if __name__ == "__main__":
     image = result["image"]
 
     regions = detect_text_regions(image)
-    print(f"Detected {len(regions)} text regions")
 
     debug_image = draw_regions_debug(image, regions)
     cv2.imwrite("detection_debug.png", debug_image)
-    print("Saved: detection_debug.png")
+    logger.info("Debug image saved", extra={"file": "detection_debug.png"})
 
     os.makedirs("detected_crops", exist_ok=True)
     for i, region in enumerate(regions):
         cv2.imwrite(f"detected_crops/region_{i:02d}.png", region["crop"])
-    print(f"Saved {len(regions)} crops to detected_crops/")
+    logger.info("Crops saved", extra={"count": len(regions), "directory": "detected_crops/"})

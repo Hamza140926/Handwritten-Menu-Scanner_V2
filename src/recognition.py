@@ -32,14 +32,13 @@ import cv2
 import numpy as np
 import torch
 import threading
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 MODEL_CHECKPOINT = "microsoft/trocr-base-handwritten"
 
-# Per the spec's postmortem lesson (§6): an earlier attempt got burned by
-# an eval harness that silently wasn't loading the checkpoint it thought
-# it was. Always log/print exactly which checkpoint is in use before
-# trusting output, rather than assuming.
-print(f"[recognition] Using model checkpoint: {MODEL_CHECKPOINT}")
+logger.info("Recognition module initialized", extra={"model_checkpoint": MODEL_CHECKPOINT})
 
 _processor = None  # lazy-loaded singletons so weights load once, not per call
 _model = None
@@ -65,7 +64,7 @@ def _get_model():
                 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 
                 _device = "cuda" if torch.cuda.is_available() else "cpu"
-                print(f"[recognition] Loading {MODEL_CHECKPOINT} on {_device}...")
+                logger.info("Loading TrOCR model", extra={"checkpoint": MODEL_CHECKPOINT, "device": _device})
 
                 _processor = TrOCRProcessor.from_pretrained(MODEL_CHECKPOINT)
                 _model = VisionEncoderDecoderModel.from_pretrained(MODEL_CHECKPOINT)
@@ -76,7 +75,7 @@ def _get_model():
                     _model = _model.to(_device)
                 _model.eval()
 
-                print(f"[recognition] Model loaded. Checkpoint confirmed: {_model.name_or_path}")
+                logger.info("TrOCR model loaded successfully", extra={"checkpoint": _model.name_or_path, "device": _device})
 
     return _processor, _model, _device
 
@@ -142,8 +141,10 @@ def recognize_regions(regions: list, batch_size: int = 8) -> list:
             "y", "x":     pass-through from the input region, if present
     """
     if not regions:
+        logger.warning("No regions to recognize")
         return []
 
+    logger.debug("Starting recognition", extra={"region_count": len(regions), "batch_size": batch_size})
     processor, model, device = _get_model()
     results = [None] * len(regions)
 
@@ -180,7 +181,8 @@ def recognize_regions(regions: list, batch_size: int = 8) -> list:
                 "y": region.get("y"),
                 "x": region.get("x"),
             }
-
+    
+    logger.info("Recognition complete", extra={"regions_processed": len(regions)})
     return results
 
 
@@ -190,15 +192,18 @@ if __name__ == "__main__":
     sys.path.insert(0, os.path.dirname(__file__))
     from preprocessing import preprocess_image
     from detection import detect_text_regions
+    from logging_config import setup_logging
+    
+    setup_logging(level="INFO")
 
     if len(sys.argv) != 2:
+        logger.error("Missing image path argument")
         print("Usage: python recognition.py <path_to_image>")
         sys.exit(1)
 
     prep = preprocess_image(sys.argv[1])
     regions = detect_text_regions(prep["image"])
-    print(f"Detected {len(regions)} text regions")
 
     results = recognize_regions(regions)
     for i, r in enumerate(results):
-        print(f"[{i:02d}] conf={r['confidence']:.2f}  text={r['text']!r}")
+        logger.info(f"Region {i:02d}", extra={"confidence": r['confidence'], "text": r['text']})

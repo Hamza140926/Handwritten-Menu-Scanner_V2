@@ -19,6 +19,9 @@ Usage:
 
 import cv2
 import numpy as np
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 MAX_DIMENSION = 2000  # cap the longer side so processing stays fast/consistent
@@ -26,12 +29,16 @@ MAX_DIMENSION = 2000  # cap the longer side so processing stays fast/consistent
 
 def load_image(path: str) -> np.ndarray:
     """Load an image from disk. Raises a clear error if it fails."""
+    logger.debug("Loading image", extra={"path": path})
     image = cv2.imread(path)
     if image is None:
+        logger.error("Failed to load image", extra={"path": path})
         raise ValueError(
             f"Could not load image at '{path}'. "
             "Check the file exists and is a valid image format."
         )
+    h, w = image.shape[:2]
+    logger.info("Image loaded successfully", extra={"path": path, "width": w, "height": h})
     return image
 
 
@@ -84,12 +91,14 @@ def compute_skew_angle(gray: np.ndarray) -> float:
     # thin handwriting strokes / lower-contrast photos can produce fewer
     # edges than the strict pass expects.
     if lines is None or len(lines) == 0:
+        logger.debug("No lines found with strict parameters, trying looser detection")
         lines = cv2.HoughLinesP(
             edges, 1, np.pi / 180, threshold=40,
             minLineLength=gray.shape[1] // 12, maxLineGap=15
         )
 
     if lines is None or len(lines) == 0:
+        logger.warning("Skew detection failed: no lines found")
         return 0.0
 
     angles = []
@@ -104,14 +113,20 @@ def compute_skew_angle(gray: np.ndarray) -> float:
             angles.append(angle)
 
     if not angles:
+        logger.warning("Skew detection: no near-horizontal lines found")
         return 0.0
 
     estimated_angle = float(np.median(angles))
 
     # Final safety clamp — never trust an estimate outside a plausible range
     if abs(estimated_angle) > MAX_SKEW_CORRECTION_DEGREES:
+        logger.warning(
+            "Skew angle outside plausible range, ignoring",
+            extra={"estimated_angle": estimated_angle, "max_allowed": MAX_SKEW_CORRECTION_DEGREES}
+        )
         return 0.0
 
+    logger.debug("Skew angle computed", extra={"angle": estimated_angle})
     return estimated_angle
 
 
@@ -169,13 +184,18 @@ def preprocess_image(path: str) -> dict:
 if __name__ == "__main__":
     import sys
 
+    from logging_config import setup_logging
+    
+    setup_logging(level="INFO")
+    
     if len(sys.argv) != 2:
+        logger.error("Missing image path argument")
         print("Usage: python preprocessing.py <path_to_image>")
         sys.exit(1)
 
     result = preprocess_image(sys.argv[1])
-    print(f"Deskew angle applied: {result['angle']:.2f} degrees")
+    logger.info("Preprocessing complete", extra={"angle": result['angle']})
 
     cv2.imwrite("preprocessed_output.png", result["image"])
     cv2.imwrite("preprocessed_gray.png", result["gray"])
-    print("Saved: preprocessed_output.png, preprocessed_gray.png")
+    logger.info("Output saved", extra={"files": ["preprocessed_output.png", "preprocessed_gray.png"]})

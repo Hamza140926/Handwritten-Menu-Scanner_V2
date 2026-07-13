@@ -50,6 +50,9 @@ from preprocessing import preprocess_image
 from detection import detect_text_regions
 from recognition import recognize_regions
 from postprocess import process_recognition_results, DEFAULT_CURRENCY
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 # How big a vertical gap (in pixels, at the working resolution preprocessing.py
 # resizes to) is still considered "the same row" when pairing a name with a
@@ -216,35 +219,71 @@ def run_pipeline(image_path: str, default_currency: str = DEFAULT_CURRENCY) -> d
 
     Returns the dict from assemble_menu().
     """
+    logger.info("Starting pipeline", extra={"image_path": image_path, "currency": default_currency})
+    
     prep = preprocess_image(image_path)
+    logger.debug("Preprocessing complete")
+    
     regions = detect_text_regions(prep["image"])
+    logger.debug("Detection complete", extra={"region_count": len(regions)})
+    
     recognized = recognize_regions(regions)
+    logger.debug("Recognition complete")
+    
     processed = process_recognition_results(recognized, default_currency=default_currency)
-    return assemble_menu(processed)
+    logger.debug("Postprocessing complete")
+    
+    menu = assemble_menu(processed)
+    logger.info("Pipeline complete", extra={
+        "items": len(menu["items"]),
+        "orphans": len(menu["orphan_prices"])
+    })
+    
+    return menu
 
 
 if __name__ == "__main__":
     import sys
+    from logging_config import setup_logging
+    
+    # Set up logging at application startup
+    setup_logging(level="INFO")
+    logger = get_logger(__name__)
 
     if len(sys.argv) < 2:
+        logger.error("Missing image path argument")
         print("Usage: python pipeline.py <path_to_image> [TND|EUR]")
         sys.exit(1)
 
+    image_path = sys.argv[1]
     currency = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_CURRENCY
+    
+    logger.info("Pipeline started", extra={"image_path": image_path, "currency": currency})
 
-    menu = run_pipeline(sys.argv[1], default_currency=currency)
+    try:
+        menu = run_pipeline(image_path, default_currency=currency)
+        
+        logger.info("Pipeline completed successfully", extra={
+            "item_count": len(menu["items"]),
+            "orphan_prices": len(menu["orphan_prices"])
+        })
 
-    print(f"\n{'='*50}\nMENU\n{'='*50}")
-    for item in menu["items"]:
-        if item["is_category_header"]:
-            print(f"\n--- {item['name']} ---")
-        else:
-            price = item["price_value"] if item["price_value"] is not None else "?"
-            flag = " (ambiguous)" if item["price_ambiguous"] else ""
-            currency_str = item["currency"] or ""
-            print(f"  {item['name']:25s} {price} {currency_str}{flag}")
+        print(f"\n{'='*50}\nMENU\n{'='*50}")
+        for item in menu["items"]:
+            if item["is_category_header"]:
+                print(f"\n--- {item['name']} ---")
+            else:
+                price = item["price_value"] if item["price_value"] is not None else "?"
+                flag = " (ambiguous)" if item["price_ambiguous"] else ""
+                currency_str = item["currency"] or ""
+                print(f"  {item['name']:25s} {price} {currency_str}{flag}")
 
-    if menu["orphan_prices"]:
-        print(f"\n{'='*50}\nUNMATCHED PRICES (need manual review)\n{'='*50}")
-        for orphan in menu["orphan_prices"]:
-            print(f"  text={orphan['text']!r}  price={orphan['price_value']}")
+        if menu["orphan_prices"]:
+            print(f"\n{'='*50}\nUNMATCHED PRICES (need manual review)\n{'='*50}")
+            for orphan in menu["orphan_prices"]:
+                print(f"  text={orphan['text']!r}  price={orphan['price_value']}")
+    
+    except Exception as e:
+        logger.exception("Pipeline failed", extra={"image_path": image_path})
+        print(f"\nError: Pipeline failed - {e}")
+        sys.exit(1)
