@@ -1,0 +1,17 @@
+# Development dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# Include base requirements
+-r requirements.txt
+
+# Testing
+pytest==8.3.4
+pytest-cov==6.0.0
+
+# Code Quality
+black==24.10.0
+flake8==7.1.1
+mypy==1.13.0
+
+# Documentation
+sphinx==8.1.3

@@ -1,5 +1,20 @@
-transformers
-torch
-pillow
-opencv-python
-numpy
+# Core dependencies with pinned versions
+# Generated: July 13, 2026
+# Python: 3.10
+# Tested on Windows with CUDA 13.0
+
+# Deep Learning
+transformers==4.46.3
+torch==2.13.0
+sentencepiece==0.2.2
+
+# Computer Vision
+opencv-python==4.10.0.84
+pillow==11.0.0
+
+# OCR
+paddleocr==3.7.0
+paddlepaddle==3.3.1
+
+# Numerical Computing
+numpy==2.1.3
