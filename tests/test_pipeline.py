@@ -7,6 +7,7 @@ from pipeline import (
     split_columns,
     identify_name_and_price_columns,
     pair_items,
+    assemble_menu,
     _price_hit_rate,
 )
 
@@ -238,3 +239,121 @@ class TestPairItems:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+
+class TestQualityMetrics:
+    """Tests for quality metrics calculation in assemble_menu."""
+    
+    def test_quality_metrics_structure(self):
+        """Test that quality metrics are included in output."""
+        processed = [
+            {"text": "Coffee", "confidence": 0.9, "price_value": None, "x": 10, "y": 10},
+            {"text": "5.5", "confidence": 0.95, "price_value": 5.5, "price_ambiguous": False, "x": 100, "y": 10},
+        ]
+        result = assemble_menu(processed)
+        
+        assert "quality_metrics" in result
+        metrics = result["quality_metrics"]
+        
+        # Check all expected fields are present
+        assert "total_regions" in metrics
+        assert "items_with_prices" in metrics
+        assert "category_headers" in metrics
+        assert "orphan_prices" in metrics
+        assert "pairing_success_rate" in metrics
+        assert "avg_confidence" in metrics
+        assert "low_confidence_items" in metrics
+        assert "ambiguous_prices" in metrics
+        assert "warnings" in metrics
+    
+    def test_perfect_pairing_metrics(self):
+        """Test metrics for perfect pairing (100% success)."""
+        processed = [
+            {"text": "Coffee", "confidence": 0.9, "price_value": None, "price_raw": None, "price_ambiguous": False, "currency": "TND", "currency_source": "default", "x": 10, "y": 10},
+            {"text": "5.5", "confidence": 0.95, "price_value": 5.5, "price_raw": "5.5", "price_ambiguous": False, "currency": "TND", "currency_source": "default", "x": 100, "y": 10},
+            {"text": "Tea", "confidence": 0.92, "price_value": None, "price_raw": None, "price_ambiguous": False, "currency": "TND", "currency_source": "default", "x": 10, "y": 30},
+            {"text": "4.0", "confidence": 0.88, "price_value": 4.0, "price_raw": "4.0", "price_ambiguous": False, "currency": "TND", "currency_source": "default", "x": 100, "y": 30},
+        ]
+        result = assemble_menu(processed)
+        metrics = result["quality_metrics"]
+        
+        assert metrics["total_regions"] == 4
+        assert metrics["items_with_prices"] == 2
+        assert metrics["category_headers"] == 0
+        assert metrics["orphan_prices"] == 0
+        assert metrics["pairing_success_rate"] == 100.0
+        assert 0.88 <= metrics["avg_confidence"] <= 0.95
+    
+    def test_low_pairing_rate_warning(self):
+        """Test warning is generated for low pairing success rate."""
+        processed = [
+            {"text": "Item1", "confidence": 0.9, "price_value": None, "price_raw": None, "price_ambiguous": False, "x": 10, "y": 10},
+            {"text": "Item2", "confidence": 0.9, "price_value": None, "price_raw": None, "price_ambiguous": False, "x": 10, "y": 30},
+            {"text": "5.5", "confidence": 0.9, "price_value": 5.5, "price_raw": "5.5", "price_ambiguous": False, "x": 100, "y": 50},
+        ]
+        result = assemble_menu(processed)
+        metrics = result["quality_metrics"]
+        
+        # Only 1 out of 2 items paired (50%)
+        assert metrics["pairing_success_rate"] <= 50
+        assert len(metrics["warnings"]) > 0
+        assert any("pairing success rate" in w.lower() for w in metrics["warnings"])
+    
+    def test_low_confidence_warning(self):
+        """Test warning for low average confidence."""
+        processed = [
+            {"text": "Coffee", "confidence": 0.3, "price_value": None, "x": 10, "y": 10},
+            {"text": "5.5", "confidence": 0.4, "price_value": 5.5, "price_ambiguous": False, "x": 100, "y": 10},
+        ]
+        result = assemble_menu(processed)
+        metrics = result["quality_metrics"]
+        
+        assert metrics["avg_confidence"] < 0.5
+        assert metrics["low_confidence_items"] == 2
+        assert any("confidence" in w.lower() for w in metrics["warnings"])
+    
+    def test_high_orphan_ratio_warning(self):
+        """Test warning for high orphan price ratio."""
+        processed = [
+            {"text": "Item1", "confidence": 0.9, "price_value": None, "price_raw": None, "price_ambiguous": False, "x": 10, "y": 10},
+            {"text": "5.5", "confidence": 0.9, "price_value": 5.5, "price_raw": "5.5", "price_ambiguous": False, "x": 100, "y": 100},
+            {"text": "6.5", "confidence": 0.9, "price_value": 6.5, "price_raw": "6.5", "price_ambiguous": False, "x": 100, "y": 200},
+            {"text": "7.5", "confidence": 0.9, "price_value": 7.5, "price_raw": "7.5", "price_ambiguous": False, "x": 100, "y": 300},
+        ]
+        result = assemble_menu(processed)
+        metrics = result["quality_metrics"]
+        
+        # 2 orphan prices out of 4 regions (50%)
+        assert metrics["orphan_prices"] >= 2
+        assert any("orphan" in w.lower() for w in metrics["warnings"])
+    
+    def test_ambiguous_prices_warning(self):
+        """Test warning for ambiguous prices."""
+        processed = [
+            {"text": "Coffee", "confidence": 0.9, "price_value": None, "x": 10, "y": 10},
+            {"text": "5.5 or 6.5", "confidence": 0.9, "price_value": 5.5, "price_ambiguous": True, "x": 100, "y": 10},
+        ]
+        result = assemble_menu(processed)
+        metrics = result["quality_metrics"]
+        
+        assert metrics["ambiguous_prices"] == 1
+        assert any("ambiguous" in w.lower() for w in metrics["warnings"])
+    
+    def test_no_warnings_for_good_quality(self):
+        """Test that high-quality scans generate no warnings."""
+        processed = [
+            {"text": "Coffee", "confidence": 0.95, "price_value": None, "price_raw": None, "price_ambiguous": False, "currency": "TND", "currency_source": "default", "x": 10, "y": 10},
+            {"text": "5.5", "confidence": 0.96, "price_value": 5.5, "price_raw": "5.5", "price_ambiguous": False, "currency": "TND", "currency_source": "default", "x": 100, "y": 10},
+            {"text": "Tea", "confidence": 0.94, "price_value": None, "price_raw": None, "price_ambiguous": False, "currency": "TND", "currency_source": "default", "x": 10, "y": 30},
+            {"text": "4.0", "confidence": 0.97, "price_value": 4.0, "price_raw": "4.0", "price_ambiguous": False, "currency": "TND", "currency_source": "default", "x": 100, "y": 30},
+        ]
+        result = assemble_menu(processed)
+        metrics = result["quality_metrics"]
+        
+        assert metrics["pairing_success_rate"] == 100.0
+        assert metrics["avg_confidence"] > 0.9
+        assert metrics["low_confidence_items"] == 0
+        assert metrics["ambiguous_prices"] == 0
+        assert metrics["orphan_prices"] == 0
+        assert len(metrics["warnings"]) == 0

@@ -207,17 +207,88 @@ def assemble_menu(processed_regions: list, max_y_distance: float = None) -> dict
     """Turn postprocess.py's flat list of regions into a structured menu:
     category headers, named items with prices, and any orphaned prices
     that need manual review.
+    
+    Also calculates quality metrics to help identify low-quality scans.
 
     Returns a dict:
         "items":          list from pair_items()
         "orphan_prices":  list from pair_items()
+        "quality_metrics": dict with:
+            "total_regions": total text regions detected
+            "items_with_prices": count of items with prices
+            "category_headers": count of category headers (no price)
+            "orphan_prices": count of unmatched prices
+            "pairing_success_rate": % of items successfully paired with prices
+            "avg_confidence": average recognition confidence (0-1)
+            "low_confidence_items": count of items with confidence < threshold
+            "ambiguous_prices": count of prices flagged as ambiguous
+            "warnings": list of quality warnings
     """
     if max_y_distance is None:
         max_y_distance = get_config().pipeline.max_y_distance
+    
+    cfg = get_config().pipeline
+    
     left, right = split_columns(processed_regions)
     name_column, price_column = identify_name_and_price_columns(left, right)
     items, orphan_prices = pair_items(name_column, price_column, max_y_distance)
-    return {"items": items, "orphan_prices": orphan_prices}
+    
+    # Calculate quality metrics
+    total_regions = len(processed_regions)
+    items_with_prices = sum(1 for item in items if item["price_value"] is not None)
+    category_headers = sum(1 for item in items if item["is_category_header"])
+    orphan_count = len(orphan_prices)
+    
+    # Pairing success rate (excluding category headers)
+    non_header_items = len(items) - category_headers
+    pairing_success_rate = (items_with_prices / non_header_items * 100) if non_header_items > 0 else 0.0
+    
+    # Average confidence across all recognized text
+    all_confidences = [r.get("confidence", 0.0) for r in processed_regions]
+    avg_confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
+    
+    # Low confidence items
+    low_confidence_items = sum(1 for r in processed_regions if r.get("confidence", 0.0) < cfg.min_confidence_warning)
+    
+    # Ambiguous prices
+    ambiguous_prices = sum(1 for r in processed_regions if r.get("price_ambiguous", False))
+    
+    # Generate warnings
+    warnings = []
+    
+    if avg_confidence < cfg.min_confidence_warning:
+        warnings.append(f"Low average confidence ({avg_confidence:.1%}). Image quality may be poor.")
+    
+    if pairing_success_rate < 50:
+        warnings.append(f"Low pairing success rate ({pairing_success_rate:.1f}%). Menu layout may be unusual.")
+    
+    orphan_ratio = orphan_count / total_regions if total_regions > 0 else 0
+    if orphan_ratio > cfg.max_orphan_price_ratio:
+        warnings.append(f"High orphan price ratio ({orphan_ratio:.1%}). Many prices couldn't be paired with items.")
+    
+    if low_confidence_items > total_regions * 0.3:
+        warnings.append(f"{low_confidence_items} regions have low confidence. Manual review recommended.")
+    
+    if ambiguous_prices > 0:
+        warnings.append(f"{ambiguous_prices} prices have ambiguous numbers. Review recommended.")
+    
+    quality_metrics = {
+        "total_regions": total_regions,
+        "items_with_prices": items_with_prices,
+        "category_headers": category_headers,
+        "orphan_prices": orphan_count,
+        "pairing_success_rate": round(pairing_success_rate, 1),
+        "avg_confidence": round(avg_confidence, 3),
+        "low_confidence_items": low_confidence_items,
+        "ambiguous_prices": ambiguous_prices,
+        "warnings": warnings
+    }
+    
+    return {
+        "items": items,
+        "orphan_prices": orphan_prices,
+        "quality_metrics": quality_metrics
+    }
 
 
 def run_pipeline(image_path: str, default_currency: str = None) -> dict:
@@ -352,6 +423,7 @@ if __name__ == "__main__":
             "orphan_prices": len(menu["orphan_prices"])
         })
 
+        # Display results
         print(f"\n{'='*50}\nMENU\n{'='*50}")
         for item in menu["items"]:
             if item["is_category_header"]:
@@ -366,6 +438,24 @@ if __name__ == "__main__":
             print(f"\n{'='*50}\nUNMATCHED PRICES (need manual review)\n{'='*50}")
             for orphan in menu["orphan_prices"]:
                 print(f"  text={orphan['text']!r}  price={orphan['price_value']}")
+        
+        # Display quality metrics
+        metrics = menu.get("quality_metrics", {})
+        if metrics:
+            print(f"\n{'='*50}\nQUALITY METRICS\n{'='*50}")
+            print(f"Total Regions Detected:    {metrics['total_regions']}")
+            print(f"Items with Prices:         {metrics['items_with_prices']}")
+            print(f"Category Headers:          {metrics['category_headers']}")
+            print(f"Orphan Prices:             {metrics['orphan_prices']}")
+            print(f"Pairing Success Rate:      {metrics['pairing_success_rate']}%")
+            print(f"Average Confidence:        {metrics['avg_confidence']:.1%}")
+            print(f"Low Confidence Items:      {metrics['low_confidence_items']}")
+            print(f"Ambiguous Prices:          {metrics['ambiguous_prices']}")
+            
+            if metrics["warnings"]:
+                print(f"\n{'='*50}\nWARNINGS\n{'='*50}")
+                for warning in metrics["warnings"]:
+                    print(f"⚠  {warning}")
     
     except ValidationError as e:
         logger.error("Validation failed", extra={"error": str(e)})
