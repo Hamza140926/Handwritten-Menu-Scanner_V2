@@ -34,12 +34,9 @@ import torch
 import threading
 from logging_config import get_logger
 from exceptions import RecognitionError
+from config import get_config
 
 logger = get_logger(__name__)
-
-MODEL_CHECKPOINT = "microsoft/trocr-base-handwritten"
-
-logger.info("Recognition module initialized", extra={"model_checkpoint": MODEL_CHECKPOINT})
 
 _processor = None  # lazy-loaded singletons so weights load once, not per call
 _model = None
@@ -67,14 +64,21 @@ def _get_model():
             if _model is None:
                 try:
                     from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+                    
+                    cfg = get_config().recognition
+                    
+                    # Auto device selection: "auto" means try CUDA first, fallback to CPU
+                    if cfg.device == "auto":
+                        _device = "cuda" if torch.cuda.is_available() else "cpu"
+                    else:
+                        _device = cfg.device
+                    
+                    logger.info("Loading TrOCR model", extra={"checkpoint": cfg.model_checkpoint, "device": _device})
 
-                    _device = "cuda" if torch.cuda.is_available() else "cpu"
-                    logger.info("Loading TrOCR model", extra={"checkpoint": MODEL_CHECKPOINT, "device": _device})
+                    _processor = TrOCRProcessor.from_pretrained(cfg.model_checkpoint)
+                    _model = VisionEncoderDecoderModel.from_pretrained(cfg.model_checkpoint)
 
-                    _processor = TrOCRProcessor.from_pretrained(MODEL_CHECKPOINT)
-                    _model = VisionEncoderDecoderModel.from_pretrained(MODEL_CHECKPOINT)
-
-                    if _device == "cuda":
+                    if _device == "cuda" and cfg.use_fp16_on_gpu:
                         _model = _model.half().to(_device)
                     else:
                         _model = _model.to(_device)
@@ -131,7 +135,7 @@ def _mean_token_confidence(scores, sequences, pad_token_id) -> list:
     return confidences.tolist()
 
 
-def recognize_regions(regions: list, batch_size: int = 16) -> list:
+def recognize_regions(regions: list, batch_size: int = None) -> list:
     """Run TrOCR over each detected region and return recognized text with
     a confidence score.
 
@@ -139,8 +143,7 @@ def recognize_regions(regions: list, batch_size: int = 16) -> list:
         regions: list of dicts from detection.detect_text_regions, each
             with at least a "crop" (BGR image) key.
         batch_size: how many crops to feed through the model at once. 
-            Default 16 works well on 4GB VRAM. Increase to 24-32 for 6GB+,
-            or lower to 8 if you hit OOM errors.
+            If None, uses config value. Increase for more VRAM, decrease if OOM.
 
     Returns:
         List of dicts, one per input region, each with:
@@ -157,6 +160,10 @@ def recognize_regions(regions: list, batch_size: int = 16) -> list:
         return []
 
     try:
+        cfg = get_config().recognition
+        if batch_size is None:
+            batch_size = cfg.batch_size
+        
         logger.debug("Starting recognition", extra={"region_count": len(regions), "batch_size": batch_size})
         processor, model, device = _get_model()
         results = [None] * len(regions)
@@ -173,10 +180,7 @@ def recognize_regions(regions: list, batch_size: int = 16) -> list:
             with torch.no_grad():
                 generated = model.generate(
                     pixel_values,
-                    max_new_tokens=32,  # explicit, so longer lines (e.g. a long
-                                        # item name plus a price, like "Couscous
-                                        # 12.500") don't get silently truncated
-                                        # at the model's default of 20
+                    max_new_tokens=cfg.max_new_tokens,
                     output_scores=True,
                     return_dict_in_generate=True,
                 )

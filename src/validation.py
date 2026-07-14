@@ -24,15 +24,9 @@ import cv2
 from pathlib import Path
 from typing import Union
 from logging_config import get_logger
+from config import get_config
 
 logger = get_logger(__name__)
-
-# Security limits
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB - reasonable for phone photos
-MIN_FILE_SIZE = 1024  # 1KB - prevent empty/corrupt files
-MAX_DIMENSION = 10000  # 10000px - prevents memory bombs
-MIN_DIMENSION = 100  # 100px - too small to be a real menu
-ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif'}
 
 
 class ValidationError(Exception):
@@ -62,6 +56,8 @@ def validate_image_input(path: Union[str, Path]) -> Path:
     """
     logger.debug("Validating input", extra={"path": str(path)})
     
+    cfg = get_config().validation
+    
     # Convert to Path and resolve (handles relative paths, symlinks)
     try:
         path = Path(path).resolve()
@@ -81,11 +77,11 @@ def validate_image_input(path: Union[str, Path]) -> Path:
     
     # Check file extension
     ext = path.suffix.lower()
-    if ext not in ALLOWED_EXTENSIONS:
+    if ext not in cfg.allowed_extensions:
         logger.warning("Unsupported format", extra={"path": str(path), "extension": ext})
         raise ValidationError(
             f"Unsupported file format: {ext}. "
-            f"Allowed formats: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+            f"Allowed formats: {', '.join(sorted(cfg.allowed_extensions))}"
         )
     
     # Check file size
@@ -95,18 +91,18 @@ def validate_image_input(path: Union[str, Path]) -> Path:
         logger.warning("Cannot read file stats", extra={"path": str(path), "error": str(e)})
         raise ValidationError(f"Cannot access file: {e}")
     
-    if file_size < MIN_FILE_SIZE:
+    if file_size < cfg.min_file_size:
         logger.warning("File too small", extra={"path": str(path), "size": file_size})
         raise ValidationError(
             f"File too small ({file_size} bytes). "
-            f"Minimum size: {MIN_FILE_SIZE} bytes. File may be corrupt."
+            f"Minimum size: {cfg.min_file_size} bytes. File may be corrupt."
         )
     
-    if file_size > MAX_FILE_SIZE:
+    if file_size > cfg.max_file_size:
         logger.warning("File too large", extra={"path": str(path), "size": file_size})
         raise ValidationError(
             f"File too large ({file_size / 1024 / 1024:.1f} MB). "
-            f"Maximum size: {MAX_FILE_SIZE / 1024 / 1024:.0f} MB"
+            f"Maximum size: {cfg.max_file_size / 1024 / 1024:.0f} MB"
         )
     
     # Try to load and validate image dimensions
@@ -129,18 +125,18 @@ def validate_image_input(path: Union[str, Path]) -> Path:
         logger.warning("Cannot get image dimensions", extra={"path": str(path), "error": str(e)})
         raise ValidationError(f"Invalid image data: {e}")
     
-    if h < MIN_DIMENSION or w < MIN_DIMENSION:
+    if h < cfg.min_dimension or w < cfg.min_dimension:
         logger.warning("Image too small", extra={"path": str(path), "width": w, "height": h})
         raise ValidationError(
             f"Image too small ({w}x{h} pixels). "
-            f"Minimum dimension: {MIN_DIMENSION}px"
+            f"Minimum dimension: {cfg.min_dimension}px"
         )
     
-    if h > MAX_DIMENSION or w > MAX_DIMENSION:
+    if h > cfg.max_dimension or w > cfg.max_dimension:
         logger.warning("Image too large", extra={"path": str(path), "width": w, "height": h})
         raise ValidationError(
             f"Image dimensions too large ({w}x{h} pixels). "
-            f"Maximum dimension: {MAX_DIMENSION}px"
+            f"Maximum dimension: {cfg.max_dimension}px"
         )
     
     logger.info("Validation passed", extra={
@@ -166,15 +162,15 @@ def validate_currency(currency: str) -> str:
     Raises:
         ValidationError: If currency is not supported
     """
-    SUPPORTED_CURRENCIES = {"TND", "EUR"}
+    supported = get_config().postprocessing.supported_currencies
     
     currency = currency.strip().upper()
     
-    if currency not in SUPPORTED_CURRENCIES:
+    if currency not in supported:
         logger.warning("Unsupported currency", extra={"currency": currency})
         raise ValidationError(
             f"Unsupported currency: {currency}. "
-            f"Supported: {', '.join(sorted(SUPPORTED_CURRENCIES))}"
+            f"Supported: {', '.join(sorted(supported))}"
         )
     
     return currency

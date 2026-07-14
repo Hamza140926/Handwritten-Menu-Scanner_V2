@@ -49,7 +49,7 @@ Downstream (the review UI) should treat "is_category_header" and
 from preprocessing import preprocess_image
 from detection import detect_text_regions
 from recognition import recognize_regions
-from postprocess import process_recognition_results, DEFAULT_CURRENCY
+from postprocess import process_recognition_results
 from validation import validate_image_input, validate_currency, ValidationError
 from exceptions import (
     PipelineError, PreprocessingError, DetectionError, 
@@ -57,6 +57,7 @@ from exceptions import (
 )
 from optimization import warmup_gpu, optimize_for_throughput
 from logging_config import get_logger
+from config import get_config
 
 logger = get_logger(__name__)
 
@@ -64,18 +65,8 @@ logger = get_logger(__name__)
 optimize_for_throughput()
 warmup_gpu()
 
-# How big a vertical gap (in pixels, at the working resolution preprocessing.py
-# resizes to) is still considered "the same row" when pairing a name with a
-# price. Kept generous since handwritten rows are rarely perfectly aligned.
-DEFAULT_MAX_Y_DISTANCE = 60
 
-# How much bigger the largest x-gap must be than the average x-gap before
-# we trust it as a real column boundary, rather than just normal spacing
-# between words in a single column.
-COLUMN_GAP_FACTOR = 2.0
-
-
-def split_columns(regions: list, gap_factor: float = COLUMN_GAP_FACTOR) -> tuple:
+def split_columns(regions: list, gap_factor: float = None) -> tuple:
     """Split regions into two side-by-side columns by x-position.
 
     Finds the largest gap between consecutive x-positions (sorted) and
@@ -86,6 +77,8 @@ def split_columns(regions: list, gap_factor: float = COLUMN_GAP_FACTOR) -> tuple
     Returns (left_column, right_column) - right_column is [] if no
     clear two-column split was found.
     """
+    if gap_factor is None:
+        gap_factor = get_config().pipeline.column_gap_factor
     if len(regions) < 2:
         return list(regions), []
 
@@ -137,7 +130,7 @@ def identify_name_and_price_columns(left: list, right: list) -> tuple:
 
 
 def pair_items(
-    name_column: list, price_column: list, max_y_distance: float = DEFAULT_MAX_Y_DISTANCE
+    name_column: list, price_column: list, max_y_distance: float = None
 ) -> tuple:
     """Pair each name region with its nearest (by y-distance) unclaimed
     price region.
@@ -158,6 +151,8 @@ def pair_items(
             a nearby name, each with "price_value", "price_raw", "text",
             "confidence" - surfaced so nothing is silently dropped.
     """
+    if max_y_distance is None:
+        max_y_distance = get_config().pipeline.max_y_distance
     sorted_names = sorted(name_column, key=lambda r: r["y"])
     unmatched_prices = sorted(price_column, key=lambda r: r["y"])
 
@@ -208,7 +203,7 @@ def pair_items(
     return items, orphan_prices
 
 
-def assemble_menu(processed_regions: list, max_y_distance: float = DEFAULT_MAX_Y_DISTANCE) -> dict:
+def assemble_menu(processed_regions: list, max_y_distance: float = None) -> dict:
     """Turn postprocess.py's flat list of regions into a structured menu:
     category headers, named items with prices, and any orphaned prices
     that need manual review.
@@ -217,13 +212,15 @@ def assemble_menu(processed_regions: list, max_y_distance: float = DEFAULT_MAX_Y
         "items":          list from pair_items()
         "orphan_prices":  list from pair_items()
     """
+    if max_y_distance is None:
+        max_y_distance = get_config().pipeline.max_y_distance
     left, right = split_columns(processed_regions)
     name_column, price_column = identify_name_and_price_columns(left, right)
     items, orphan_prices = pair_items(name_column, price_column, max_y_distance)
     return {"items": items, "orphan_prices": orphan_prices}
 
 
-def run_pipeline(image_path: str, default_currency: str = DEFAULT_CURRENCY) -> dict:
+def run_pipeline(image_path: str, default_currency: str = None) -> dict:
     """Run the full pipeline on a menu photo: preprocess -> detect ->
     recognize -> postprocess -> assemble into menu items.
     
@@ -239,6 +236,9 @@ def run_pipeline(image_path: str, default_currency: str = DEFAULT_CURRENCY) -> d
         ValidationError: If input validation fails (caller should handle)
         PipelineError: If any pipeline stage fails (caller should handle)
     """
+    if default_currency is None:
+        default_currency = get_config().postprocessing.default_currency
+    
     logger.info("Starting pipeline", extra={"image_path": image_path, "currency": default_currency})
     
     # Validate inputs (raises ValidationError if invalid)
@@ -312,12 +312,12 @@ if __name__ == "__main__":
         sys.exit(1)
 
     image_path = sys.argv[1]
-    currency = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_CURRENCY
+    default_currency = sys.argv[2] if len(sys.argv) > 2 else get_config().postprocessing.default_currency
     
-    logger.info("Pipeline started", extra={"image_path": image_path, "currency": currency})
+    logger.info("Pipeline started", extra={"image_path": image_path, "currency": default_currency})
 
     try:
-        menu = run_pipeline(image_path, default_currency=currency)
+        menu = run_pipeline(image_path, default_currency=default_currency)
         
         logger.info("Pipeline completed successfully", extra={
             "item_count": len(menu["items"]),

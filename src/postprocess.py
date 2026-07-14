@@ -41,19 +41,7 @@ contain a usable number and what's the resolved currency." See spec
 """
 
 import re
-
-# Tolerant of both '.' and ',' as decimal separators (both appear in
-# Tunisian handwriting) - up to 3 decimal digits to allow millime-level
-# TND prices like "12.500", not just 2-decimal EUR-style prices.
-PRICE_PATTERN = re.compile(r"\d+(?:[.,]\d{1,3})?")
-
-SUPPORTED_CURRENCIES = {"TND", "EUR"}
-DEFAULT_CURRENCY = "TND"  # per spec §3: 70-80% of menus are TND
-
-# How confident recognition.py's per-token score must be before a
-# detected "€" symbol is trusted as an override hint (spec §5.5: "only
-# ... when confidence is high, not as the primary source of truth").
-CURRENCY_SYMBOL_CONFIDENCE_THRESHOLD = 0.85
+from config import get_config
 
 
 def extract_price(text: str) -> dict:
@@ -77,7 +65,9 @@ def extract_price(text: str) -> dict:
         "raw":       the exact substring that produced "value"
         "ambiguous": True if multiple differing numbers were found
     """
-    matches = PRICE_PATTERN.findall(text)
+    cfg = get_config().postprocessing
+    price_pattern = re.compile(cfg.price_pattern)
+    matches = price_pattern.findall(text)
     if not matches:
         return {"value": None, "raw": None, "ambiguous": False}
 
@@ -87,6 +77,10 @@ def extract_price(text: str) -> dict:
     try:
         value = float(chosen_raw.replace(",", "."))
     except ValueError:
+        return {"value": None, "raw": None, "ambiguous": False}
+    
+    # Validate price is reasonable
+    if not (cfg.min_reasonable_price <= value <= cfg.max_reasonable_price):
         return {"value": None, "raw": None, "ambiguous": False}
 
     distinct_values = {m.replace(",", ".") for m in matches}
@@ -110,7 +104,7 @@ def resolve_currency(
     default_currency: str,
     text: str,
     confidence: float,
-    threshold: float = CURRENCY_SYMBOL_CONFIDENCE_THRESHOLD,
+    threshold: float = None,
 ) -> tuple:
     """Resolve the currency for one region.
 
@@ -122,16 +116,22 @@ def resolve_currency(
     "detected_symbol", so the review UI can show why a field is what it
     is if the owner ever wonders.
     """
+    if threshold is None:
+        threshold = get_config().postprocessing.currency_confidence_threshold
+    
     symbol = detect_currency_symbol(text)
     if symbol is not None and confidence >= threshold:
         return symbol, "detected_symbol"
     return default_currency, "default"
 
 
-def process_region(region: dict, default_currency: str = DEFAULT_CURRENCY) -> dict:
+def process_region(region: dict, default_currency: str = None) -> dict:
     """Run price extraction + currency resolution on one recognized
     region (a dict from recognition.recognize_regions) and return it
     with the extra fields added. Original keys are preserved."""
+    if default_currency is None:
+        default_currency = get_config().postprocessing.default_currency
+    
     text = region.get("text", "")
     confidence = region.get("confidence", 0.0)
 
@@ -148,7 +148,7 @@ def process_region(region: dict, default_currency: str = DEFAULT_CURRENCY) -> di
 
 
 def process_recognition_results(
-    results: list, default_currency: str = DEFAULT_CURRENCY
+    results: list, default_currency: str = None
 ) -> list:
     """Run process_region over every recognized region.
 
@@ -161,10 +161,14 @@ def process_recognition_results(
         List of dicts, same order as input, each with the fields
         documented in process_region added.
     """
-    if default_currency not in SUPPORTED_CURRENCIES:
+    if default_currency is None:
+        default_currency = get_config().postprocessing.default_currency
+    
+    supported = get_config().postprocessing.supported_currencies
+    if default_currency not in supported:
         raise ValueError(
             f"Unsupported default_currency {default_currency!r}. "
-            f"Expected one of {sorted(SUPPORTED_CURRENCIES)}."
+            f"Expected one of {sorted(supported)}."
         )
 
     return [process_region(r, default_currency) for r in results]
@@ -182,14 +186,14 @@ if __name__ == "__main__":
         print("Usage: python postprocess.py <path_to_image> [TND|EUR]")
         sys.exit(1)
 
-    currency = sys.argv[2] if len(sys.argv) > 2 else DEFAULT_CURRENCY
+    default_currency = sys.argv[2] if len(sys.argv) > 2 else get_config().postprocessing.default_currency
 
     prep = preprocess_image(sys.argv[1])
     regions = detect_text_regions(prep["image"])
     print(f"Detected {len(regions)} text regions")
 
     recognized = recognize_regions(regions)
-    processed = process_recognition_results(recognized, default_currency=currency)
+    processed = process_recognition_results(recognized, default_currency=default_currency)
 
     for i, r in enumerate(processed):
         price_str = f"{r['price_value']}" if r["price_value"] is not None else "-"

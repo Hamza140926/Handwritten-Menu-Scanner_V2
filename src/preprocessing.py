@@ -21,11 +21,9 @@ import cv2
 import numpy as np
 from logging_config import get_logger
 from exceptions import PreprocessingError
+from config import get_config
 
 logger = get_logger(__name__)
-
-
-MAX_DIMENSION = 2000  # cap the longer side so processing stays fast/consistent
 
 
 def load_image(path: str) -> np.ndarray:
@@ -49,8 +47,10 @@ def load_image(path: str) -> np.ndarray:
         raise PreprocessingError(f"Failed to load image: {e}") from e
 
 
-def resize_max_dimension(image: np.ndarray, max_dim: int = MAX_DIMENSION) -> np.ndarray:
+def resize_max_dimension(image: np.ndarray, max_dim: int = None) -> np.ndarray:
     """Resize image so its longer side is at most max_dim, preserving aspect ratio."""
+    if max_dim is None:
+        max_dim = get_config().preprocessing.max_dimension
     h, w = image.shape[:2]
     longer_side = max(h, w)
     if longer_side <= max_dim:
@@ -63,13 +63,14 @@ def resize_max_dimension(image: np.ndarray, max_dim: int = MAX_DIMENSION) -> np.
 def denoise(image: np.ndarray) -> np.ndarray:
     """Light denoising — removes speckle/noise from photographed paper without
     blurring handwriting strokes too much."""
-    return cv2.fastNlMeansDenoisingColored(image, None, h=7, hColor=7,
-                                            templateWindowSize=7, searchWindowSize=21)
-
-
-MAX_SKEW_CORRECTION_DEGREES = 15.0  # real-world photo skew is rarely more than this;
-                                     # anything beyond it is almost certainly a bad
-                                     # estimate, not real rotation — clamp/skip instead
+    cfg = get_config().preprocessing
+    return cv2.fastNlMeansDenoisingColored(
+        image, None, 
+        h=cfg.denoise_strength, 
+        hColor=cfg.denoise_strength,
+        templateWindowSize=cfg.denoise_template_window, 
+        searchWindowSize=cfg.denoise_search_window
+    )
 
 
 def compute_skew_angle(gray: np.ndarray) -> float:
@@ -84,9 +85,10 @@ def compute_skew_angle(gray: np.ndarray) -> float:
 
     A safety clamp ensures we never apply a large "correction" that isn't
     really there: real-world uploaded photos are rarely rotated more than
-    a few degrees, so any estimate beyond MAX_SKEW_CORRECTION_DEGREES is
+    a few degrees, so any estimate beyond max_skew_degrees is
     treated as noise and ignored (returns 0.0) rather than applied.
     """
+    max_skew_degrees = get_config().preprocessing.max_skew_degrees
     edges = cv2.Canny(gray, 50, 150, apertureSize=3)
 
     lines = cv2.HoughLinesP(
@@ -116,7 +118,7 @@ def compute_skew_angle(gray: np.ndarray) -> float:
         angle = np.degrees(np.arctan2(y2 - y1, x2 - x1))
         # Only keep near-horizontal lines (text baselines), reject anything
         # closer to vertical (note edges, unrelated background lines)
-        if abs(angle) <= MAX_SKEW_CORRECTION_DEGREES:
+        if abs(angle) <= max_skew_degrees:
             angles.append(angle)
 
     if not angles:
@@ -126,10 +128,10 @@ def compute_skew_angle(gray: np.ndarray) -> float:
     estimated_angle = float(np.median(angles))
 
     # Final safety clamp — never trust an estimate outside a plausible range
-    if abs(estimated_angle) > MAX_SKEW_CORRECTION_DEGREES:
+    if abs(estimated_angle) > max_skew_degrees:
         logger.warning(
             "Skew angle outside plausible range, ignoring",
-            extra={"estimated_angle": estimated_angle, "max_allowed": MAX_SKEW_CORRECTION_DEGREES}
+            extra={"estimated_angle": estimated_angle, "max_allowed": max_skew_degrees}
         )
         return 0.0
 
@@ -158,7 +160,8 @@ def normalize_contrast(gray: np.ndarray) -> np.ndarray:
     This matters a lot for phone/scanner photos of paper menus, which
     often have uneven lighting or shadows across the page.
     """
-    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
+    cfg = get_config().preprocessing
+    clahe = cv2.createCLAHE(clipLimit=cfg.clahe_clip_limit, tileGridSize=cfg.clahe_tile_size)
     return clahe.apply(gray)
 
 

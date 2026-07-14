@@ -28,6 +28,7 @@ import numpy as np
 import threading
 from logging_config import get_logger
 from exceptions import DetectionError
+from config import get_config
 
 logger = get_logger(__name__)
 
@@ -61,6 +62,7 @@ def _get_detector():
             if _detector is None:
                 try:
                     from paddleocr import TextDetection
+                    cfg = get_config().detection
                     # "mobile" model: smaller/faster, good fit for a 4GB GPU or CPU.
                     # Swap to "PP-OCRv5_server_det" for higher accuracy if your
                     # hardware handles it comfortably.
@@ -70,8 +72,8 @@ def _get_detector():
                     # "NotImplementedError: ConvertPirAttribute2RuntimeAttribute not
                     # support [...]" on CPU inference with MKL-DNN enabled (the
                     # default). See: github.com/PaddlePaddle/Paddle/issues/77340
-                    logger.info("Initializing PaddleOCR text detector")
-                    _detector = TextDetection(model_name="PP-OCRv5_mobile_det", enable_mkldnn=False)
+                    logger.info("Initializing PaddleOCR text detector", extra={"model": cfg.model_name})
+                    _detector = TextDetection(model_name=cfg.model_name, enable_mkldnn=cfg.enable_mkldnn)
                     logger.info("PaddleOCR text detector loaded successfully")
                 except Exception as e:
                     logger.exception("Failed to load PaddleOCR detector")
@@ -141,7 +143,7 @@ def _crop_box(image: np.ndarray, box: np.ndarray, padding: int = 4) -> np.ndarra
     return crop
 
 
-def detect_text_regions(image: np.ndarray, min_box_area: int = 200) -> list:
+def detect_text_regions(image: np.ndarray, min_box_area: int = None) -> list:
     """Detect text regions in a preprocessed menu image.
 
     Args:
@@ -160,12 +162,15 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = 200) -> list:
         DetectionError: If detection fails
     """
     try:
+        cfg = get_config().detection
+        if min_box_area is None:
+            min_box_area = cfg.min_box_area
+        
         logger.debug("Starting text detection", extra={"min_box_area": min_box_area})
         detector = _get_detector()
         
-        # Batch size 1 is optimal for single images
-        # Use deterministic=False for slight speedup (not needed for reproducibility)
-        output = detector.predict(input=image, batch_size=1)
+        # Batch size from config
+        output = detector.predict(input=image, batch_size=cfg.batch_size)
 
         # predict() returns an iterable of one result per input image; we only
         # passed one image, so take the first (only) result.
@@ -198,7 +203,8 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = 200) -> list:
         # won't always have perfectly aligned rows, so this is a best-effort
         # sort, not a guarantee — downstream (recognition + review UI) should
         # not hard-depend on perfect ordering.
-        regions.sort(key=lambda r: (round(r["y"] / 20), r["x"]))
+        row_tolerance = cfg.row_tolerance
+        regions.sort(key=lambda r: (round(r["y"] / row_tolerance), r["x"]))
         
         logger.info("Text detection complete", extra={"regions_found": len(regions), "filtered_out": len(raw_boxes) - len(regions)})
 

@@ -11,6 +11,7 @@ import torch
 import gc
 import numpy as np
 from logging_config import get_logger
+from config import get_config
 
 logger = get_logger(__name__)
 
@@ -25,6 +26,9 @@ def warmup_gpu():
     
     Call this once at application startup for best performance.
     """
+    if not get_config().optimization.warmup_gpu_on_startup:
+        return
+    
     if not torch.cuda.is_available():
         logger.debug("No GPU available, skipping warmup")
         return
@@ -48,6 +52,9 @@ def clear_gpu_memory():
     Call this after processing a batch of images to free up memory
     for the next batch. Useful in batch processing scenarios.
     """
+    if not get_config().optimization.clear_cache_after_batch:
+        return
+    
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         logger.debug("GPU memory cache cleared")
@@ -97,14 +104,18 @@ def optimize_for_throughput():
     These settings favor throughput over latency, good for
     batch processing multiple menus.
     """
+    cfg = get_config().optimization
+    
     if torch.cuda.is_available():
         # Enable TF32 on Ampere GPUs (RTX 30xx, A100, etc.)
         # ~2x speedup for matmul operations
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.allow_tf32 = True
+        if cfg.enable_tf32:
+            torch.backends.cuda.matmul.allow_tf32 = True
+            torch.backends.cudnn.allow_tf32 = True
         
         # Enable cuDNN auto-tuner (finds fastest convolution algorithm)
-        torch.backends.cudnn.benchmark = True
+        if cfg.enable_cudnn_benchmark:
+            torch.backends.cudnn.benchmark = True
         
         logger.info("PyTorch throughput optimizations enabled")
 
