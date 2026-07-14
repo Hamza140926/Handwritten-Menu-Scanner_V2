@@ -50,6 +50,7 @@ from preprocessing import preprocess_image
 from detection import detect_text_regions
 from recognition import recognize_regions
 from postprocess import process_recognition_results, DEFAULT_CURRENCY
+from validation import validate_image_input, validate_currency, ValidationError
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -216,12 +217,21 @@ def assemble_menu(processed_regions: list, max_y_distance: float = DEFAULT_MAX_Y
 def run_pipeline(image_path: str, default_currency: str = DEFAULT_CURRENCY) -> dict:
     """Run the full pipeline on a menu photo: preprocess -> detect ->
     recognize -> postprocess -> assemble into menu items.
+    
+    Validates input before processing to prevent crashes from malformed data.
 
     Returns the dict from assemble_menu().
+    
+    Raises:
+        ValidationError: If input validation fails
     """
     logger.info("Starting pipeline", extra={"image_path": image_path, "currency": default_currency})
     
-    prep = preprocess_image(image_path)
+    # Validate inputs before processing
+    validated_path = validate_image_input(image_path)
+    validated_currency = validate_currency(default_currency)
+    
+    prep = preprocess_image(str(validated_path))
     logger.debug("Preprocessing complete")
     
     regions = detect_text_regions(prep["image"])
@@ -230,7 +240,7 @@ def run_pipeline(image_path: str, default_currency: str = DEFAULT_CURRENCY) -> d
     recognized = recognize_regions(regions)
     logger.debug("Recognition complete")
     
-    processed = process_recognition_results(recognized, default_currency=default_currency)
+    processed = process_recognition_results(recognized, default_currency=validated_currency)
     logger.debug("Postprocessing complete")
     
     menu = assemble_menu(processed)
@@ -282,6 +292,11 @@ if __name__ == "__main__":
             print(f"\n{'='*50}\nUNMATCHED PRICES (need manual review)\n{'='*50}")
             for orphan in menu["orphan_prices"]:
                 print(f"  text={orphan['text']!r}  price={orphan['price_value']}")
+    
+    except ValidationError as e:
+        logger.error("Validation failed", extra={"error": str(e)})
+        print(f"\nValidation Error: {e}")
+        sys.exit(1)
     
     except Exception as e:
         logger.exception("Pipeline failed", extra={"image_path": image_path})
