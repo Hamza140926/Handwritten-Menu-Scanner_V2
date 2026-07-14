@@ -162,6 +162,9 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = 200) -> list:
     try:
         logger.debug("Starting text detection", extra={"min_box_area": min_box_area})
         detector = _get_detector()
+        
+        # Batch size 1 is optimal for single images
+        # Use deterministic=False for slight speedup (not needed for reproducibility)
         output = detector.predict(input=image, batch_size=1)
 
         # predict() returns an iterable of one result per input image; we only

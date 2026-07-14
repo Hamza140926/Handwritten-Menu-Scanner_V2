@@ -55,9 +55,14 @@ from exceptions import (
     PipelineError, PreprocessingError, DetectionError, 
     RecognitionError, PostprocessingError, AssemblyError
 )
+from optimization import warmup_gpu, optimize_for_throughput
 from logging_config import get_logger
 
 logger = get_logger(__name__)
+
+# Apply performance optimizations on module load
+optimize_for_throughput()
+warmup_gpu()
 
 # How big a vertical gap (in pixels, at the working resolution preprocessing.py
 # resizes to) is still considered "the same row" when pairing a name with a

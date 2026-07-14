@@ -131,16 +131,16 @@ def _mean_token_confidence(scores, sequences, pad_token_id) -> list:
     return confidences.tolist()
 
 
-def recognize_regions(regions: list, batch_size: int = 8) -> list:
+def recognize_regions(regions: list, batch_size: int = 16) -> list:
     """Run TrOCR over each detected region and return recognized text with
     a confidence score.
 
     Args:
         regions: list of dicts from detection.detect_text_regions, each
             with at least a "crop" (BGR image) key.
-        batch_size: how many crops to feed through the model at once. TrOCR
-            base fits several crops per batch even on 4GB VRAM; lower this
-            if you hit an out-of-memory error.
+        batch_size: how many crops to feed through the model at once. 
+            Default 16 works well on 4GB VRAM. Increase to 24-32 for 6GB+,
+            or lower to 8 if you hit OOM errors.
 
     Returns:
         List of dicts, one per input region, each with:
