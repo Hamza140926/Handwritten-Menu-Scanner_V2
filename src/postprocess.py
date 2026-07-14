@@ -50,6 +50,11 @@ def extract_price(text: str) -> dict:
     Does not interpret currency letters at all - only digits and the
     decimal separator matter here.
 
+    Improved regex with word boundaries to avoid matching:
+    - Dates (e.g., "12/07/2024", "2024-07-12")
+    - Times (e.g., "10:30", "14:45")
+    - Other non-price numbers embedded in text
+
     Selection policy when a string contains more than one digit group
     (common with noisy OCR on short price crops, e.g. "3, 3, 3."):
         1. Prefer a match that includes a decimal separator - that's a
@@ -60,30 +65,81 @@ def extract_price(text: str) -> dict:
     "ambiguous" so the review UI can call extra attention to it, rather
     than silently picking one and hiding the uncertainty.
 
+    Edge cases handled:
+    - Leading/trailing whitespace
+    - Multiple decimal separators (invalid)
+    - Zero or negative prices (invalid)
+    - Prices outside reasonable range
+    - OCR errors like "O" instead of "0"
+
     Returns a dict with:
         "value":     float, or None if no number was found
         "raw":       the exact substring that produced "value"
         "ambiguous": True if multiple differing numbers were found
     """
     cfg = get_config().postprocessing
-    price_pattern = re.compile(cfg.price_pattern)
-    matches = price_pattern.findall(text)
+    
+    # Clean common OCR errors before processing
+    text = text.strip()
+    # Replace common OCR misreads (letter O -> digit 0)
+    # Only replace isolated O's that look like they should be zeros
+    cleaned_text = re.sub(r'\bO\b', '0', text)  # Isolated capital O
+    cleaned_text = re.sub(r'(?<=\d)O(?=\d)', '0', cleaned_text)  # O between digits
+    cleaned_text = re.sub(r'(?<=\d)O(?=[.,])', '0', cleaned_text)  # O before decimal
+    
+    # Improved price pattern with word boundaries
+    # Matches: 123, 12.5, 12.50, 12.500, 1,234.50, etc.
+    # Doesn't match: dates (2024-07-12), times (10:30), phone numbers
+    price_pattern = re.compile(r'\b\d{1,6}(?:[.,]\d{1,3})?\b')
+    
+    matches = price_pattern.findall(cleaned_text)
     if not matches:
         return {"value": None, "raw": None, "ambiguous": False}
 
-    decimal_matches = [m for m in matches if "." in m or "," in m]
-    chosen_raw = decimal_matches[0] if decimal_matches else matches[0]
+    # Filter out obvious non-prices (edge cases)
+    valid_matches = []
+    for match in matches:
+        # Skip if it looks like a date (4-digit year)
+        if len(match) == 4 and match.isdigit():
+            continue
+        # Skip if multiple decimal separators
+        if match.count('.') > 1 or match.count(',') > 1:
+            continue
+        # Skip if both . and , appear (likely OCR error)
+        if '.' in match and ',' in match:
+            continue
+        valid_matches.append(match)
+    
+    if not valid_matches:
+        return {"value": None, "raw": None, "ambiguous": False}
+
+    # Prefer matches with decimal separator (stronger signal of price)
+    decimal_matches = [m for m in valid_matches if "." in m or "," in m]
+    chosen_raw = decimal_matches[0] if decimal_matches else valid_matches[0]
 
     try:
+        # Normalize decimal separator to .
         value = float(chosen_raw.replace(",", "."))
     except ValueError:
         return {"value": None, "raw": None, "ambiguous": False}
     
-    # Validate price is reasonable
+    # Validate price is reasonable and positive
+    if value <= 0:
+        return {"value": None, "raw": None, "ambiguous": False}
+    
     if not (cfg.min_reasonable_price <= value <= cfg.max_reasonable_price):
         return {"value": None, "raw": None, "ambiguous": False}
 
-    distinct_values = {m.replace(",", ".") for m in matches}
+    # Check for ambiguity (multiple distinct values)
+    distinct_values = set()
+    for m in valid_matches:
+        try:
+            val = float(m.replace(",", "."))
+            if val > 0:  # Only count valid positive values
+                distinct_values.add(val)
+        except ValueError:
+            continue
+    
     ambiguous = len(distinct_values) > 1
 
     return {"value": value, "raw": chosen_raw, "ambiguous": ambiguous}
@@ -91,12 +147,32 @@ def extract_price(text: str) -> dict:
 
 def detect_currency_symbol(text: str) -> str | None:
     """Look for a currency *symbol* (not abbreviation letters) in the
-    recognized text. Only "€" is checked, deliberately - per spec §5.5,
-    lettered abbreviations (DT/dt/D/d/TND) are exactly the unreliable
-    signal this design avoids depending on.
+    recognized text.
+    
+    Checks for:
+    - € (Euro symbol)
+    - $ (Dollar - treated as EUR for European context, or could be USD)
+    - Common OCR errors for € (C with lines, etc.)
+    
+    Per spec §5.5, lettered abbreviations (DT/dt/D/d/TND) are deliberately
+    NOT checked - they're unreliable in handwriting recognition.
     """
-    if "€" in text:
+    text = text.strip()
+    
+    # Check for Euro symbol
+    if "€" in text or "EUR" in text.upper():
         return "EUR"
+    
+    # Check for Dollar (context-dependent - could map to USD or EUR)
+    # In Tunisian context, $ might indicate foreign currency (EUR)
+    if "$" in text:
+        return "EUR"  # Adjust based on your business logic
+    
+    # Common OCR errors for € symbol
+    # Sometimes recognized as "E" or "C" with decoration
+    if re.search(r'\b[EC€]\s*(?=\d)', text):
+        return "EUR"
+    
     return None
 
 

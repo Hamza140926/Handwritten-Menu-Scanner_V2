@@ -77,8 +77,8 @@ class RecognitionConfig:
 class PostprocessingConfig:
     """Price extraction and currency resolution configuration."""
     
-    # Price extraction
-    price_pattern: str = r"\d+(?:[.,]\d{1,3})?"  # Regex for price matching
+    # Price extraction (improved with word boundaries)
+    price_pattern: str = r"\b\d{1,6}(?:[.,]\d{1,3})?\b"  # Word boundary, 1-6 digits, optional decimal
     min_reasonable_price: float = 0.01  # Minimum valid price
     max_reasonable_price: float = 99999.0  # Maximum valid price
     

@@ -10,9 +10,8 @@ from preprocessing import (
     compute_skew_angle,
     deskew,
     normalize_contrast,
-    MAX_DIMENSION,
-    MAX_SKEW_CORRECTION_DEGREES,
 )
+from config import get_config
 from exceptions import PreprocessingError
 
 
@@ -91,8 +90,9 @@ class TestComputeSkewAngle:
     
     def test_max_correction_limit(self):
         """Test MAX_SKEW_CORRECTION_DEGREES constant is reasonable."""
-        assert MAX_SKEW_CORRECTION_DEGREES == 15.0
-        assert 0 < MAX_SKEW_CORRECTION_DEGREES < 45
+        cfg = get_config().preprocessing
+        assert cfg.max_skew_degrees == 15.0
+        assert 0 < cfg.max_skew_degrees < 45
 
 
 class TestDeskew:
@@ -176,12 +176,14 @@ class TestPreprocessingConstants:
     
     def test_max_dimension_reasonable(self):
         """Test MAX_DIMENSION is set to reasonable value."""
-        assert MAX_DIMENSION == 2000
-        assert 1000 <= MAX_DIMENSION <= 5000
+        cfg = get_config().preprocessing
+        assert cfg.max_dimension == 2000
+        assert 1000 <= cfg.max_dimension <= 5000
     
     def test_skew_correction_limit_reasonable(self):
         """Test skew correction limit is reasonable."""
-        assert 5 <= MAX_SKEW_CORRECTION_DEGREES <= 30
+        cfg = get_config().preprocessing
+        assert 5 <= cfg.max_skew_degrees <= 30
 
 
 class TestPreprocessingErrorHandling:

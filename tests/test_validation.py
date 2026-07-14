@@ -9,11 +9,8 @@ from validation import (
     validate_image_input,
     validate_currency,
     ValidationError,
-    MAX_FILE_SIZE,
-    MIN_FILE_SIZE,
-    MAX_DIMENSION,
-    MIN_DIMENSION,
 )
+from config import get_config
 
 
 class TestValidateImageInput:
@@ -44,12 +41,11 @@ class TestValidateImageInput:
     
     def test_supported_extensions(self):
         """Test that common image extensions are supported."""
+        cfg = get_config().validation
         supported = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif']
         # This test just verifies the extensions are recognized
-        # Actual file testing would need real images
-        from validation import ALLOWED_EXTENSIONS
         for ext in supported:
-            assert ext in ALLOWED_EXTENSIONS
+            assert ext in cfg.allowed_extensions
 
 
 class TestValidateCurrency:
@@ -97,15 +93,17 @@ class TestSecurityLimits:
     
     def test_file_size_limits_reasonable(self):
         """Test file size limits are reasonable."""
-        assert MIN_FILE_SIZE == 1024  # 1KB
-        assert MAX_FILE_SIZE == 50 * 1024 * 1024  # 50MB
-        assert MIN_FILE_SIZE < MAX_FILE_SIZE
+        cfg = get_config().validation
+        assert cfg.min_file_size == 1024  # 1KB
+        assert cfg.max_file_size == 50 * 1024 * 1024  # 50MB
+        assert cfg.min_file_size < cfg.max_file_size
     
     def test_dimension_limits_reasonable(self):
         """Test dimension limits are reasonable."""
-        assert MIN_DIMENSION == 100  # 100px
-        assert MAX_DIMENSION == 10000  # 10000px
-        assert MIN_DIMENSION < MAX_DIMENSION
+        cfg = get_config().validation
+        assert cfg.min_dimension == 100  # 100px
+        assert cfg.max_dimension == 10000  # 10000px
+        assert cfg.min_dimension < cfg.max_dimension
 
 
 if __name__ == "__main__":
