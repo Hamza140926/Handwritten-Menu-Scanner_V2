@@ -33,6 +33,7 @@ import numpy as np
 import torch
 import threading
 from logging_config import get_logger
+from exceptions import RecognitionError
 
 logger = get_logger(__name__)
 
@@ -54,6 +55,9 @@ def _get_model():
 
     Thread-safe: Multiple simultaneous calls will wait for initialization
     to complete rather than creating duplicate model instances.
+    
+    Raises:
+        RecognitionError: If model loading fails
     """
     global _processor, _model, _device
     if _model is None:
@@ -61,21 +65,26 @@ def _get_model():
             # Double-check locking pattern: another thread might have
             # initialized while we were waiting for the lock
             if _model is None:
-                from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+                try:
+                    from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 
-                _device = "cuda" if torch.cuda.is_available() else "cpu"
-                logger.info("Loading TrOCR model", extra={"checkpoint": MODEL_CHECKPOINT, "device": _device})
+                    _device = "cuda" if torch.cuda.is_available() else "cpu"
+                    logger.info("Loading TrOCR model", extra={"checkpoint": MODEL_CHECKPOINT, "device": _device})
 
-                _processor = TrOCRProcessor.from_pretrained(MODEL_CHECKPOINT)
-                _model = VisionEncoderDecoderModel.from_pretrained(MODEL_CHECKPOINT)
+                    _processor = TrOCRProcessor.from_pretrained(MODEL_CHECKPOINT)
+                    _model = VisionEncoderDecoderModel.from_pretrained(MODEL_CHECKPOINT)
 
-                if _device == "cuda":
-                    _model = _model.half().to(_device)
-                else:
-                    _model = _model.to(_device)
-                _model.eval()
+                    if _device == "cuda":
+                        _model = _model.half().to(_device)
+                    else:
+                        _model = _model.to(_device)
+                    _model.eval()
 
-                logger.info("TrOCR model loaded successfully", extra={"checkpoint": _model.name_or_path, "device": _device})
+                    logger.info("TrOCR model loaded successfully", extra={"checkpoint": _model.name_or_path, "device": _device})
+                
+                except Exception as e:
+                    logger.exception("Failed to load TrOCR model")
+                    raise RecognitionError(f"Failed to initialize recognition model: {e}") from e
 
     return _processor, _model, _device
 
@@ -139,51 +148,61 @@ def recognize_regions(regions: list, batch_size: int = 8) -> list:
             "confidence": float in [0, 1]
             "box":        pass-through from the input region, if present
             "y", "x":     pass-through from the input region, if present
+            
+    Raises:
+        RecognitionError: If recognition fails
     """
     if not regions:
         logger.warning("No regions to recognize")
         return []
 
-    logger.debug("Starting recognition", extra={"region_count": len(regions), "batch_size": batch_size})
-    processor, model, device = _get_model()
-    results = [None] * len(regions)
+    try:
+        logger.debug("Starting recognition", extra={"region_count": len(regions), "batch_size": batch_size})
+        processor, model, device = _get_model()
+        results = [None] * len(regions)
 
-    for start in range(0, len(regions), batch_size):
-        batch = regions[start:start + batch_size]
-        images = [_bgr_to_pil(r["crop"]) for r in batch]
+        for start in range(0, len(regions), batch_size):
+            batch = regions[start:start + batch_size]
+            images = [_bgr_to_pil(r["crop"]) for r in batch]
 
-        pixel_values = processor(images=images, return_tensors="pt").pixel_values
-        pixel_values = pixel_values.to(device)
-        if device == "cuda":
-            pixel_values = pixel_values.half()
+            pixel_values = processor(images=images, return_tensors="pt").pixel_values
+            pixel_values = pixel_values.to(device)
+            if device == "cuda":
+                pixel_values = pixel_values.half()
 
-        with torch.no_grad():
-            generated = model.generate(
-                pixel_values,
-                max_new_tokens=32,  # explicit, so longer lines (e.g. a long
-                                    # item name plus a price, like "Couscous
-                                    # 12.500") don't get silently truncated
-                                    # at the model's default of 20
-                output_scores=True,
-                return_dict_in_generate=True,
+            with torch.no_grad():
+                generated = model.generate(
+                    pixel_values,
+                    max_new_tokens=32,  # explicit, so longer lines (e.g. a long
+                                        # item name plus a price, like "Couscous
+                                        # 12.500") don't get silently truncated
+                                        # at the model's default of 20
+                    output_scores=True,
+                    return_dict_in_generate=True,
+                )
+
+            texts = processor.batch_decode(generated.sequences, skip_special_tokens=True)
+            confidences = _mean_token_confidence(
+                generated.scores, generated.sequences, processor.tokenizer.pad_token_id
             )
 
-        texts = processor.batch_decode(generated.sequences, skip_special_tokens=True)
-        confidences = _mean_token_confidence(
-            generated.scores, generated.sequences, processor.tokenizer.pad_token_id
-        )
-
-        for i, region in enumerate(batch):
-            results[start + i] = {
-                "text": texts[i].strip(),
-                "confidence": float(confidences[i]),
-                "box": region.get("box"),
-                "y": region.get("y"),
-                "x": region.get("x"),
-            }
+            for i, region in enumerate(batch):
+                results[start + i] = {
+                    "text": texts[i].strip(),
+                    "confidence": float(confidences[i]),
+                    "box": region.get("box"),
+                    "y": region.get("y"),
+                    "x": region.get("x"),
+                }
+        
+        logger.info("Recognition complete", extra={"regions_processed": len(regions)})
+        return results
     
-    logger.info("Recognition complete", extra={"regions_processed": len(regions)})
-    return results
+    except RecognitionError:
+        raise
+    except Exception as e:
+        logger.exception("Recognition failed")
+        raise RecognitionError(f"Recognition pipeline failed: {e}") from e
 
 
 if __name__ == "__main__":

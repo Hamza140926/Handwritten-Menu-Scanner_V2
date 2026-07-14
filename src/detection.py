@@ -27,6 +27,7 @@ import cv2
 import numpy as np
 import threading
 from logging_config import get_logger
+from exceptions import DetectionError
 
 logger = get_logger(__name__)
 
@@ -48,6 +49,9 @@ def _get_detector():
     Defaults to CPU. If you've installed paddlepaddle-gpu (matching your
     CUDA version) instead of the plain CPU build, pass device="gpu:0" to
     detect_text_regions() to use it.
+    
+    Raises:
+        DetectionError: If model loading fails
     """
     global _detector
     if _detector is None:
@@ -55,19 +59,23 @@ def _get_detector():
             # Double-check locking pattern: another thread might have
             # initialized while we were waiting for the lock
             if _detector is None:
-                from paddleocr import TextDetection
-                # "mobile" model: smaller/faster, good fit for a 4GB GPU or CPU.
-                # Swap to "PP-OCRv5_server_det" for higher accuracy if your
-                # hardware handles it comfortably.
-                #
-                # enable_mkldnn=False works around a known bug in PaddlePaddle
-                # 3.3.x's CPU inference backend (oneDNN/PIR executor) that throws
-                # "NotImplementedError: ConvertPirAttribute2RuntimeAttribute not
-                # support [...]" on CPU inference with MKL-DNN enabled (the
-                # default). See: github.com/PaddlePaddle/Paddle/issues/77340
-                logger.info("Initializing PaddleOCR text detector")
-                _detector = TextDetection(model_name="PP-OCRv5_mobile_det", enable_mkldnn=False)
-                logger.info("PaddleOCR text detector loaded successfully")
+                try:
+                    from paddleocr import TextDetection
+                    # "mobile" model: smaller/faster, good fit for a 4GB GPU or CPU.
+                    # Swap to "PP-OCRv5_server_det" for higher accuracy if your
+                    # hardware handles it comfortably.
+                    #
+                    # enable_mkldnn=False works around a known bug in PaddlePaddle
+                    # 3.3.x's CPU inference backend (oneDNN/PIR executor) that throws
+                    # "NotImplementedError: ConvertPirAttribute2RuntimeAttribute not
+                    # support [...]" on CPU inference with MKL-DNN enabled (the
+                    # default). See: github.com/PaddlePaddle/Paddle/issues/77340
+                    logger.info("Initializing PaddleOCR text detector")
+                    _detector = TextDetection(model_name="PP-OCRv5_mobile_det", enable_mkldnn=False)
+                    logger.info("PaddleOCR text detector loaded successfully")
+                except Exception as e:
+                    logger.exception("Failed to load PaddleOCR detector")
+                    raise DetectionError(f"Failed to initialize text detector: {e}") from e
     return _detector
 
 
@@ -147,47 +155,57 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = 200) -> list:
             "crop": cropped BGR image of the text region
             "box":  the original 4 corner points in the source image
             "y":    approximate vertical center, used for sorting
+            
+    Raises:
+        DetectionError: If detection fails
     """
-    logger.debug("Starting text detection", extra={"min_box_area": min_box_area})
-    detector = _get_detector()
-    output = detector.predict(input=image, batch_size=1)
+    try:
+        logger.debug("Starting text detection", extra={"min_box_area": min_box_area})
+        detector = _get_detector()
+        output = detector.predict(input=image, batch_size=1)
 
-    # predict() returns an iterable of one result per input image; we only
-    # passed one image, so take the first (only) result.
-    result_item = next(iter(output))
-    raw_boxes = _extract_polygons(result_item)
-    logger.debug("Raw detection complete", extra={"raw_boxes_count": len(raw_boxes)})
+        # predict() returns an iterable of one result per input image; we only
+        # passed one image, so take the first (only) result.
+        result_item = next(iter(output))
+        raw_boxes = _extract_polygons(result_item)
+        logger.debug("Raw detection complete", extra={"raw_boxes_count": len(raw_boxes)})
 
-    regions = []
-    for box in raw_boxes:
-        box = np.array(box, dtype="float32")
+        regions = []
+        for box in raw_boxes:
+            box = np.array(box, dtype="float32")
 
-        # Filter tiny/degenerate boxes
-        area = cv2.contourArea(box)
-        if area < min_box_area:
-            continue
+            # Filter tiny/degenerate boxes
+            area = cv2.contourArea(box)
+            if area < min_box_area:
+                continue
 
-        crop = _crop_box(image, box)
-        y_center = float(np.mean(box[:, 1]))
-        x_center = float(np.mean(box[:, 0]))
+            crop = _crop_box(image, box)
+            y_center = float(np.mean(box[:, 1]))
+            x_center = float(np.mean(box[:, 0]))
 
-        regions.append({
-            "crop": crop,
-            "box": box,
-            "y": y_center,
-            "x": x_center,
-        })
+            regions.append({
+                "crop": crop,
+                "box": box,
+                "y": y_center,
+                "x": x_center,
+            })
 
-    # Approximate natural reading order: sort primarily top-to-bottom,
-    # then left-to-right within a similar vertical band. Free-form menus
-    # won't always have perfectly aligned rows, so this is a best-effort
-    # sort, not a guarantee — downstream (recognition + review UI) should
-    # not hard-depend on perfect ordering.
-    regions.sort(key=lambda r: (round(r["y"] / 20), r["x"]))
+        # Approximate natural reading order: sort primarily top-to-bottom,
+        # then left-to-right within a similar vertical band. Free-form menus
+        # won't always have perfectly aligned rows, so this is a best-effort
+        # sort, not a guarantee — downstream (recognition + review UI) should
+        # not hard-depend on perfect ordering.
+        regions.sort(key=lambda r: (round(r["y"] / 20), r["x"]))
+        
+        logger.info("Text detection complete", extra={"regions_found": len(regions), "filtered_out": len(raw_boxes) - len(regions)})
+
+        return regions
     
-    logger.info("Text detection complete", extra={"regions_found": len(regions), "filtered_out": len(raw_boxes) - len(regions)})
-
-    return regions
+    except DetectionError:
+        raise
+    except Exception as e:
+        logger.exception("Text detection failed")
+        raise DetectionError(f"Detection pipeline failed: {e}") from e
 
 
 def draw_regions_debug(image: np.ndarray, regions: list) -> np.ndarray:

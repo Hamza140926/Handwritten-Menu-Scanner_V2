@@ -20,6 +20,7 @@ Usage:
 import cv2
 import numpy as np
 from logging_config import get_logger
+from exceptions import PreprocessingError
 
 logger = get_logger(__name__)
 
@@ -30,16 +31,22 @@ MAX_DIMENSION = 2000  # cap the longer side so processing stays fast/consistent
 def load_image(path: str) -> np.ndarray:
     """Load an image from disk. Raises a clear error if it fails."""
     logger.debug("Loading image", extra={"path": path})
-    image = cv2.imread(path)
-    if image is None:
-        logger.error("Failed to load image", extra={"path": path})
-        raise ValueError(
-            f"Could not load image at '{path}'. "
-            "Check the file exists and is a valid image format."
-        )
-    h, w = image.shape[:2]
-    logger.info("Image loaded successfully", extra={"path": path, "width": w, "height": h})
-    return image
+    try:
+        image = cv2.imread(path)
+        if image is None:
+            logger.error("Failed to load image", extra={"path": path})
+            raise PreprocessingError(
+                f"Could not load image at '{path}'. "
+                "Check the file exists and is a valid image format."
+            )
+        h, w = image.shape[:2]
+        logger.info("Image loaded successfully", extra={"path": path, "width": w, "height": h})
+        return image
+    except PreprocessingError:
+        raise
+    except Exception as e:
+        logger.error("Unexpected error loading image", extra={"path": path, "error": str(e)})
+        raise PreprocessingError(f"Failed to load image: {e}") from e
 
 
 def resize_max_dimension(image: np.ndarray, max_dim: int = MAX_DIMENSION) -> np.ndarray:
@@ -162,23 +169,33 @@ def preprocess_image(path: str) -> dict:
         "image": preprocessed BGR image (deskewed, denoised)
         "gray":  preprocessed grayscale image (deskewed, contrast-normalized)
         "angle": the skew angle that was corrected, in degrees
+        
+    Raises:
+        PreprocessingError: If any preprocessing step fails
     """
-    image = load_image(path)
-    image = resize_max_dimension(image)
+    try:
+        image = load_image(path)
+        image = resize_max_dimension(image)
 
-    # Detect skew BEFORE denoising — denoising blurs away the fine edges
-    # (especially thin handwriting strokes) that skew detection relies on.
-    # Running detection after denoise was causing silent failures (angle
-    # always 0.0) on real photos.
-    gray_for_skew = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    angle = compute_skew_angle(gray_for_skew)
+        # Detect skew BEFORE denoising — denoising blurs away the fine edges
+        # (especially thin handwriting strokes) that skew detection relies on.
+        # Running detection after denoise was causing silent failures (angle
+        # always 0.0) on real photos.
+        gray_for_skew = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        angle = compute_skew_angle(gray_for_skew)
 
-    image = denoise(image)
-    image = deskew(image, angle)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray = normalize_contrast(gray)
+        image = denoise(image)
+        image = deskew(image, angle)
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray = normalize_contrast(gray)
 
-    return {"image": image, "gray": gray, "angle": angle}
+        return {"image": image, "gray": gray, "angle": angle}
+    
+    except PreprocessingError:
+        raise
+    except Exception as e:
+        logger.exception("Preprocessing failed", extra={"path": path})
+        raise PreprocessingError(f"Preprocessing pipeline failed: {e}") from e
 
 
 if __name__ == "__main__":

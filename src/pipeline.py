@@ -51,6 +51,10 @@ from detection import detect_text_regions
 from recognition import recognize_regions
 from postprocess import process_recognition_results, DEFAULT_CURRENCY
 from validation import validate_image_input, validate_currency, ValidationError
+from exceptions import (
+    PipelineError, PreprocessingError, DetectionError, 
+    RecognitionError, PostprocessingError, AssemblyError
+)
 from logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -218,38 +222,75 @@ def run_pipeline(image_path: str, default_currency: str = DEFAULT_CURRENCY) -> d
     """Run the full pipeline on a menu photo: preprocess -> detect ->
     recognize -> postprocess -> assemble into menu items.
     
-    Validates input before processing to prevent crashes from malformed data.
+    Validates input before processing and handles errors gracefully.
+    Each stage can fail independently without crashing the entire pipeline.
 
-    Returns the dict from assemble_menu().
+    Returns the dict from assemble_menu(), or an error dict with:
+        "error": error type (validation, preprocessing, detection, etc.)
+        "message": human-readable error message
+        "items": empty list (for consistent response structure)
     
     Raises:
-        ValidationError: If input validation fails
+        ValidationError: If input validation fails (caller should handle)
+        PipelineError: If any pipeline stage fails (caller should handle)
     """
     logger.info("Starting pipeline", extra={"image_path": image_path, "currency": default_currency})
     
-    # Validate inputs before processing
+    # Validate inputs (raises ValidationError if invalid)
     validated_path = validate_image_input(image_path)
     validated_currency = validate_currency(default_currency)
     
-    prep = preprocess_image(str(validated_path))
-    logger.debug("Preprocessing complete")
+    # Stage 1: Preprocessing
+    try:
+        prep = preprocess_image(str(validated_path))
+        logger.debug("Preprocessing complete")
+    except PreprocessingError as e:
+        logger.error("Preprocessing stage failed", exc_info=True)
+        raise
     
-    regions = detect_text_regions(prep["image"])
-    logger.debug("Detection complete", extra={"region_count": len(regions)})
+    # Stage 2: Detection
+    try:
+        regions = detect_text_regions(prep["image"])
+        logger.debug("Detection complete", extra={"region_count": len(regions)})
+        
+        if not regions:
+            logger.warning("No text regions detected")
+            return {
+                "items": [],
+                "orphan_prices": [],
+                "warning": "No text detected in image"
+            }
+    except DetectionError as e:
+        logger.error("Detection stage failed", exc_info=True)
+        raise
     
-    recognized = recognize_regions(regions)
-    logger.debug("Recognition complete")
+    # Stage 3: Recognition
+    try:
+        recognized = recognize_regions(regions)
+        logger.debug("Recognition complete")
+    except RecognitionError as e:
+        logger.error("Recognition stage failed", exc_info=True)
+        raise
     
-    processed = process_recognition_results(recognized, default_currency=validated_currency)
-    logger.debug("Postprocessing complete")
+    # Stage 4: Postprocessing
+    try:
+        processed = process_recognition_results(recognized, default_currency=validated_currency)
+        logger.debug("Postprocessing complete")
+    except Exception as e:
+        logger.error("Postprocessing stage failed", exc_info=True)
+        raise PostprocessingError(f"Postprocessing failed: {e}") from e
     
-    menu = assemble_menu(processed)
-    logger.info("Pipeline complete", extra={
-        "items": len(menu["items"]),
-        "orphans": len(menu["orphan_prices"])
-    })
-    
-    return menu
+    # Stage 5: Assembly
+    try:
+        menu = assemble_menu(processed)
+        logger.info("Pipeline complete", extra={
+            "items": len(menu["items"]),
+            "orphans": len(menu["orphan_prices"])
+        })
+        return menu
+    except Exception as e:
+        logger.error("Assembly stage failed", exc_info=True)
+        raise AssemblyError(f"Menu assembly failed: {e}") from e
 
 
 if __name__ == "__main__":
@@ -298,7 +339,31 @@ if __name__ == "__main__":
         print(f"\nValidation Error: {e}")
         sys.exit(1)
     
+    except PreprocessingError as e:
+        logger.error("Preprocessing failed", extra={"error": str(e)})
+        print(f"\nPreprocessing Error: {e}")
+        print("The image could not be preprocessed. Check if the file is corrupt.")
+        sys.exit(1)
+    
+    except DetectionError as e:
+        logger.error("Detection failed", extra={"error": str(e)})
+        print(f"\nDetection Error: {e}")
+        print("Text detection failed. The image may not contain readable text.")
+        sys.exit(1)
+    
+    except RecognitionError as e:
+        logger.error("Recognition failed", extra={"error": str(e)})
+        print(f"\nRecognition Error: {e}")
+        print("Handwriting recognition failed. Try a clearer image.")
+        sys.exit(1)
+    
+    except (PostprocessingError, AssemblyError) as e:
+        logger.error("Pipeline stage failed", extra={"error": str(e)})
+        print(f"\nPipeline Error: {e}")
+        sys.exit(1)
+    
     except Exception as e:
-        logger.exception("Pipeline failed", extra={"image_path": image_path})
-        print(f"\nError: Pipeline failed - {e}")
+        logger.exception("Unexpected pipeline failure", extra={"image_path": image_path})
+        print(f"\nUnexpected Error: {e}")
+        print("An unexpected error occurred. Check the logs for details.")
         sys.exit(1)
