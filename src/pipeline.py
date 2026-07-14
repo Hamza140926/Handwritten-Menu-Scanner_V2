@@ -55,7 +55,7 @@ from exceptions import (
     PipelineError, PreprocessingError, DetectionError, 
     RecognitionError, PostprocessingError, AssemblyError
 )
-from optimization import warmup_gpu, optimize_for_throughput
+from optimization import warmup_gpu, optimize_for_throughput, log_memory_usage
 from logging_config import get_logger
 from config import get_config
 
@@ -226,6 +226,9 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
     
     Validates input before processing and handles errors gracefully.
     Each stage can fail independently without crashing the entire pipeline.
+    
+    Memory optimized: clears intermediate results after each stage to
+    reduce peak memory usage.
 
     Returns the dict from assemble_menu(), or an error dict with:
         "error": error type (validation, preprocessing, detection, etc.)
@@ -247,8 +250,10 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
     
     # Stage 1: Preprocessing
     try:
+        log_memory_usage("before_preprocessing")
         prep = preprocess_image(str(validated_path))
         logger.debug("Preprocessing complete")
+        log_memory_usage("after_preprocessing")
     except PreprocessingError as e:
         logger.error("Preprocessing stage failed", exc_info=True)
         raise
@@ -257,6 +262,11 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
     try:
         regions = detect_text_regions(prep["image"])
         logger.debug("Detection complete", extra={"region_count": len(regions)})
+        log_memory_usage("after_detection")
+        
+        # Memory optimization: clear preprocessing results, only keep regions
+        del prep
+        log_memory_usage("after_cleanup_prep")
         
         if not regions:
             logger.warning("No text regions detected")
@@ -273,6 +283,15 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
     try:
         recognized = recognize_regions(regions)
         logger.debug("Recognition complete")
+        log_memory_usage("after_recognition")
+        
+        # Memory optimization: clear crop images from regions (no longer needed)
+        for region in regions:
+            if "crop" in region:
+                del region["crop"]
+        del regions
+        log_memory_usage("after_cleanup_crops")
+        
     except RecognitionError as e:
         logger.error("Recognition stage failed", exc_info=True)
         raise
@@ -281,6 +300,10 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
     try:
         processed = process_recognition_results(recognized, default_currency=validated_currency)
         logger.debug("Postprocessing complete")
+        
+        # Memory optimization: clear intermediate recognition results
+        del recognized
+        
     except Exception as e:
         logger.error("Postprocessing stage failed", exc_info=True)
         raise PostprocessingError(f"Postprocessing failed: {e}") from e
@@ -292,6 +315,11 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
             "items": len(menu["items"]),
             "orphans": len(menu["orphan_prices"])
         })
+        log_memory_usage("after_assembly")
+        
+        # Memory optimization: clear processed regions (final result is in menu)
+        del processed
+        
         return menu
     except Exception as e:
         logger.error("Assembly stage failed", exc_info=True)

@@ -198,6 +198,11 @@ def recognize_regions(regions: list, batch_size: int = None) -> list:
                     "y": region.get("y"),
                     "x": region.get("x"),
                 }
+            
+            # Memory cleanup: free intermediate tensors after each batch
+            del pixel_values, generated, texts, confidences, images
+            if device == "cuda":
+                torch.cuda.empty_cache()
         
         logger.info("Recognition complete", extra={"regions_processed": len(regions)})
         return results

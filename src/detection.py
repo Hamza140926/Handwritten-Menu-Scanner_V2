@@ -208,6 +208,11 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = None) -> list:
         
         logger.info("Text detection complete", extra={"regions_found": len(regions), "filtered_out": len(raw_boxes) - len(regions)})
 
+        # Memory optimization: each region's "crop" is a full numpy array
+        # that will be held in memory until recognition completes. The "box"
+        # coordinates are kept for debugging but won't be used downstream.
+        # Consider removing "box" if memory is extremely tight.
+        
         return regions
     
     except DetectionError:

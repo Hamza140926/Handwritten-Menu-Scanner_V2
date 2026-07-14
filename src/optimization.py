@@ -5,11 +5,14 @@ Contains functions to improve pipeline performance through:
 - GPU warmup
 - Memory optimization
 - Batch processing helpers
+- Memory profiling
 """
 
 import torch
 import gc
 import numpy as np
+import psutil
+import os
 from logging_config import get_logger
 from config import get_config
 
@@ -133,6 +136,65 @@ def optimize_for_latency():
         torch.backends.cudnn.deterministic = True
         
         logger.info("PyTorch latency optimizations enabled")
+
+
+def get_memory_usage() -> dict:
+    """
+    Get current memory usage (CPU RAM and GPU VRAM if available).
+    
+    Returns:
+        dict with:
+            "cpu_mb": CPU RAM usage in MB
+            "gpu_mb": GPU VRAM usage in MB (None if no GPU)
+            "gpu_available_mb": Total GPU VRAM in MB (None if no GPU)
+            "gpu_percent": GPU VRAM usage percentage (None if no GPU)
+    """
+    # CPU memory
+    process = psutil.Process(os.getpid())
+    cpu_mb = process.memory_info().rss / 1024**2
+    
+    result = {
+        "cpu_mb": cpu_mb,
+        "gpu_mb": None,
+        "gpu_available_mb": None,
+        "gpu_percent": None
+    }
+    
+    # GPU memory
+    if torch.cuda.is_available():
+        gpu_mb = torch.cuda.memory_allocated(0) / 1024**2
+        gpu_available_mb = torch.cuda.get_device_properties(0).total_memory / 1024**2
+        gpu_percent = (gpu_mb / gpu_available_mb * 100) if gpu_available_mb > 0 else 0
+        
+        result.update({
+            "gpu_mb": gpu_mb,
+            "gpu_available_mb": gpu_available_mb,
+            "gpu_percent": gpu_percent
+        })
+    
+    return result
+
+
+def log_memory_usage(stage: str = ""):
+    """
+    Log current memory usage with optional stage label.
+    
+    Args:
+        stage: Optional label for the current pipeline stage
+    """
+    mem = get_memory_usage()
+    extra = {"stage": stage} if stage else {}
+    extra.update({
+        "cpu_mb": f"{mem['cpu_mb']:.1f}",
+    })
+    
+    if mem["gpu_mb"] is not None:
+        extra.update({
+            "gpu_mb": f"{mem['gpu_mb']:.1f}",
+            "gpu_percent": f"{mem['gpu_percent']:.1f}%"
+        })
+    
+    logger.debug("Memory usage", extra=extra)
 
 
 if __name__ == "__main__":
