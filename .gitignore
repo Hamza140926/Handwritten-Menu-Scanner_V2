@@ -6,6 +6,14 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
 
+# Testing
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+coverage.xml
+*.cover
+
 # Virtual environments
 venv/
 .venv/
