@@ -69,7 +69,6 @@ import numpy as np
 # testing, so they're all up here instead of buried in the logic.
 # --------------------------------------------------------------------------
 MAX_TILT_DEG = 8          # how far we'll tilt the line before giving up
-TILT_STEP_DEG = 1         # degree increment per retry
 CATEGORY_HEIGHT_RATIO = 1.35   # a box taller than (median_height * this) is a
                                 # category candidate
 NOISE_HEIGHT_RATIO = 4.0       # a box taller than (median_height * this) is
@@ -78,6 +77,10 @@ NOISE_HEIGHT_RATIO = 4.0       # a box taller than (median_height * this) is
 MAX_VERTICAL_SHIFT_RATIO = 1.0  # the pairing line may drift at most this many
                                  # multiples of the median text height away
                                  # from its source row -- caps row-jumping
+AMBIGUITY_MARGIN_DEG = 1.5      # if the best and second-best candidate need
+                                 # tilt angles within this many degrees of
+                                 # each other, treat it as a tie and defer to
+                                 # the verification pass rather than guess
 MIN_BOX_AREA = 40         # discard tiny speckle boxes (classical fallback only)
 
 
@@ -91,6 +94,7 @@ class Box:
     kind: str = "unknown"      # "category" | "item" | "unknown"
     paired_with: Optional[int] = None
     pair_tilt_deg: Optional[float] = None
+    verified_pass: bool = False  # True if resolved by the pass-2 re-verification step
     group: Optional[int] = None  # index into categories list
 
     @property
@@ -291,62 +295,139 @@ def line_y_at_x(y0: float, x0: float, x: float, angle_deg: float) -> float:
     return y0 + (x - x0) * math.tan(math.radians(angle_deg))
 
 
-def find_pair(source: Box, candidates: list, used: set, max_vertical_shift: float) -> tuple:
-    """Try angle 0, then +-1, +-2, ... up to MAX_TILT_DEG.
-    Returns (matched_box_or_None, angle_used).
+def find_pair(source: Box, candidates: list, used: set, max_vertical_shift: float) -> list:
+    """Rank every valid candidate to the right of `source`.
 
-    max_vertical_shift caps how far the *line itself* may drift from the
-    source's own row center, independent of the angle. Without this, a long
-    horizontal gap combined with even a small angle can drift the line into
-    a completely different row -- e.g. a lone header with nothing on its own
-    row tilting far enough to grab a price that belongs to an item two rows
-    below it. Angle alone doesn't prevent this because the same angle
-    produces a small shift over a short gap and a large shift over a long one.
+    IMPORTANT: this does NOT walk a fixed list of preset angles and stop at
+    the first hit. An earlier version did that (0, +1, -1, +2, -2, ...) and
+    it has an ordering bug: if the correct match needs a small *upward* tilt
+    but a WRONG candidate (e.g. belonging to the row below) happens to be
+    reachable with an even smaller *downward* tilt, the wrong one wins
+    simply because "down" was checked first at that step. On a column of
+    evenly-spaced rows this reliably cascades: one row grabs its neighbor's
+    price, shifting everything below it down by one, leaving both ends of
+    the column orphaned.
+
+    Instead: for every candidate, solve directly for the angle that would
+    make the ray pass exactly through its center, and rank ALL valid
+    candidates by |angle| (smallest first). Returning the full ranked list
+    (not just the winner) lets the caller detect genuine ties/ambiguity
+    instead of silently committing to a coin flip.
     """
-    angle_sequence = [0]
-    for step in range(TILT_STEP_DEG, MAX_TILT_DEG + 1, TILT_STEP_DEG):
-        angle_sequence += [step, -step]
-
     x0, y0 = source.xmax, source.ycenter
+    ranked = []
 
-    for angle in angle_sequence:
-        best = None
-        best_dist = None
-        for cand in candidates:
-            if cand.idx == source.idx or cand.idx in used:
-                continue
-            if cand.kind != "item":
-                continue
-            if cand.xmin <= source.xmax:
-                continue  # must be strictly to the right
-            y_line = line_y_at_x(y0, x0, cand.xcenter, angle)
-            if abs(y_line - y0) > max_vertical_shift:
-                continue  # would be drifting into a different row
-            if cand.ymin <= y_line <= cand.ymax:
-                dist = cand.xmin - source.xmax
-                if best_dist is None or dist < best_dist:
-                    best = cand
-                    best_dist = dist
-        if best is not None:
-            return best, angle
-    return None, None
+    for cand in candidates:
+        if cand.idx == source.idx or cand.idx in used:
+            continue
+        if cand.kind != "item":
+            continue
+        if cand.xmin <= source.xmax:
+            continue  # must be strictly to the right
+
+        dx = cand.xcenter - x0
+        dy = cand.ycenter - y0
+        if abs(dy) > max_vertical_shift:
+            continue  # candidate's own row is too far away, regardless of angle
+
+        angle = math.degrees(math.atan2(dy, dx))
+        if abs(angle) > MAX_TILT_DEG:
+            continue
+
+        ranked.append((abs(angle), cand.xmin - source.xmax, cand, round(angle, 1)))
+
+    ranked.sort(key=lambda t: (t[0], t[1]))
+    return ranked  # list of (abs_angle, x_dist, candidate, signed_angle), best first
+
+
+def estimate_row_pitch(boxes: list) -> float:
+    """Median gap between vertically-distinct item rows -- used to size the
+    vertical-shift cap relative to this menu's actual line spacing instead
+    of a fixed constant."""
+    ys = sorted(b.ycenter for b in boxes if b.kind == "item")
+    diffs = [b - a for a, b in zip(ys, ys[1:]) if b - a > 2]
+    if not diffs:
+        return 30.0
+    diffs.sort()
+    return diffs[len(diffs) // 2]
+
+
+def _commit_pair(a: Box, b: Box, angle, used: set, verified: bool = False) -> None:
+    a.paired_with = b.idx
+    a.pair_tilt_deg = angle
+    a.verified_pass = verified
+    b.paired_with = a.idx
+    b.pair_tilt_deg = angle
+    b.verified_pass = verified
+    used.add(a.idx)
+    used.add(b.idx)
 
 
 def run_pairing(boxes: list, median_item_height: float) -> None:
-    max_vertical_shift = median_item_height * MAX_VERTICAL_SHIFT_RATIO
-    used = set()
+    """Two passes:
+
+    Pass 1 commits only UNAMBIGUOUS matches -- if the best and second-best
+    candidate require nearly the same tilt magnitude, that's a genuine tie
+    (e.g. an item sitting almost exactly halfway between two price rows) and
+    committing to either one risks being wrong, so it's deferred instead of
+    guessed.
+
+    Pass 2 (the "re-verification" pass): using the item<->price vertical
+    offset learned from pass 1's confident matches, every remaining orphan
+    is matched against the candidate whose position is closest to *where
+    the price should be* given that learned offset -- instead of purely
+    "closest by angle" -- which is exactly what breaks the ties pass 1
+    correctly refused to guess at.
+    """
+    row_pitch = estimate_row_pitch(boxes)
+    max_vertical_shift = max(median_item_height * MAX_VERTICAL_SHIFT_RATIO, row_pitch * 0.6)
     items = [b for b in boxes if b.kind == "item"]
+    used = set()
+    confident_dys = []
+
+    # --- pass 1: commit only clear, unambiguous matches ---
     for src in items:
         if src.idx in used:
             continue
-        match, angle = find_pair(src, items, used, max_vertical_shift)
-        if match is not None:
-            src.paired_with = match.idx
-            src.pair_tilt_deg = angle
-            match.paired_with = src.idx
-            match.pair_tilt_deg = angle
-            used.add(src.idx)
-            used.add(match.idx)
+        ranked = find_pair(src, items, used, max_vertical_shift)
+        if not ranked:
+            continue
+        best_abs_angle, _, best_cand, best_angle = ranked[0]
+        if len(ranked) > 1:
+            second_abs_angle = ranked[1][0]
+            if (second_abs_angle - best_abs_angle) < AMBIGUITY_MARGIN_DEG:
+                continue  # too close to call -- leave for pass 2
+        _commit_pair(src, best_cand, best_angle, used)
+        confident_dys.append(best_cand.ycenter - src.ycenter)
+
+    # learn the typical item-center -> price-center vertical offset from the
+    # matches we were actually confident about
+    if confident_dys:
+        confident_dys.sort()
+        learned_dy = confident_dys[len(confident_dys) // 2]
+    else:
+        learned_dy = 0.0
+
+    # --- pass 2: re-verify remaining items using the learned offset ---
+    remaining = [b for b in items if b.idx not in used]
+    for src in remaining:
+        if src.idx in used:
+            continue
+        expected_y = src.ycenter + learned_dy
+        best, best_dist = None, None
+        for cand in remaining:
+            if cand.idx == src.idx or cand.idx in used:
+                continue
+            if cand.xmin <= src.xmax:
+                continue
+            dist = abs(cand.ycenter - expected_y)
+            if dist > max_vertical_shift:
+                continue
+            if best_dist is None or dist < best_dist:
+                best, best_dist = cand, dist
+        if best is not None:
+            angle = round(math.degrees(math.atan2(best.ycenter - src.ycenter, best.xmax - src.xmax)), 1)
+            _commit_pair(src, best, angle, used, verified=True)
 
 
 # --------------------------------------------------------------------------

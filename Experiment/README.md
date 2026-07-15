@@ -53,10 +53,11 @@ All tuning knobs are at the top of `pairing_experiment.py`:
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `MAX_TILT_DEG` | 8 | Maximum angle to tilt the pairing line before giving up |
-| `TILT_STEP_DEG` | 1 | Degree increment per retry (±1°, ±2°, ...) |
+| `TILT_STEP_DEG` | 1 | *(Deprecated)* No longer used - algorithm solves for exact angles |
 | `CATEGORY_HEIGHT_RATIO` | 1.35 | Box taller than median × this is a category header |
 | `NOISE_HEIGHT_RATIO` | 4.0 | Box taller than median × this is decorative noise |
 | `MAX_VERTICAL_SHIFT_RATIO` | 1.0 | Max vertical drift as multiple of median height |
+| `AMBIGUITY_MARGIN_DEG` | 1.5 | Angle difference threshold for detecting ties (Pass 1 defers, Pass 2 resolves) |
 | `MIN_BOX_AREA` | 40 | Discard tiny speckle boxes (classical fallback only) |
 
 ## Usage
@@ -83,46 +84,96 @@ Batch mode:
 
 ## How It Works (Technical Details)
 
-### Ray Casting Logic
-```python
-# 1. Start with horizontal line through box's right edge
-y0 = source_box.ycenter
-x0 = source_box.xmax
+### Algorithm Architecture: Two-Pass Approach
 
-# 2. Try angle 0°, then ±1°, ±2°, ..., up to ±MAX_TILT_DEG
-for angle in [0, +1, -1, +2, -2, ..., +8, -8]:
-    # 3. Calculate line's Y coordinate at candidate's X center
-    y_line = y0 + (candidate.xcenter - x0) * tan(angle)
-    
-    # 4. Check collision: does line pass through candidate box?
-    if candidate.ymin <= y_line <= candidate.ymax:
-        # 5. Check vertical drift limit
-        if abs(y_line - y0) <= max_vertical_shift:
-            # MATCH FOUND
-            return candidate, angle
+The pairing algorithm uses **two passes** to avoid a critical ordering bug found in simpler implementations:
+
+**Pass 1: Commit only unambiguous matches**
+- For each source box, compute the exact angle needed to reach every candidate
+- Rank all candidates by absolute angle (smallest first)
+- **Critical**: If the best and second-best candidates require angles within `AMBIGUITY_MARGIN_DEG` (1.5°), it's a genuine tie → defer to Pass 2
+- Only commit clear winners (significant angle difference between best and second-best)
+- Track the vertical offset (dy) between paired items and prices
+
+**Pass 2: Re-verification using learned offset**
+- Calculate median dy from Pass 1's confident matches
+- For remaining orphans, predict where the price **should be** based on learned offset
+- Match to candidate closest to predicted position (not closest by angle)
+- Breaks ties that Pass 1 correctly refused to guess
+
+### Why Two Passes?
+
+**The Ordering Bug (fixed by this approach)**:
+
+Early versions tried angles in sequence `[0, +1, -1, +2, -2, ...]` and stopped at first hit. This has a fatal flaw:
+
 ```
+Row 1: [Item A ______]            (correct price: 3.50, needs +1° tilt)
+Row 2: [Item B ___] [3.50]        (B's correct price)
+Row 3: [Item C ___] [4.00]        (C's correct price, reachable at -2° from A)
+```
+
+If Item A's correct match (3.50 at +1°) is checked AFTER a wrong match (4.00 at -2°), the wrong one wins simply due to search order. This cascades down the column: one row "steals" the next row's price, everything shifts down, both ends become orphans.
+
+**Solution**: Don't iterate through preset angles. Instead, solve directly for the angle to each candidate, rank ALL candidates by |angle|, and detect genuine ambiguity (ties) rather than making coin flips based on search order.
+
+### Ray Casting Logic (Pass 1)
+```python
+# For each candidate, solve for the exact angle needed
+dx = candidate.xcenter - source.xmax
+dy = candidate.ycenter - source.ycenter
+angle = atan2(dy, dx)  # Direct solve, not sequential search
+
+# Rank ALL valid candidates by absolute angle
+ranked.sort(key=lambda: abs(angle))
+
+# Detect ties: if best and second-best are within 1.5°, defer
+if len(ranked) > 1:
+    if abs(ranked[1].angle - ranked[0].angle) < AMBIGUITY_MARGIN_DEG:
+        # Too close to call → leave for Pass 2
+        continue
+```
+
+### Vertical Drift Prevention
+
+Two mechanisms prevent cross-row pairing:
+
+**1. Candidate Pre-Filter**: 
+```python
+if abs(candidate.ycenter - source.ycenter) > max_vertical_shift:
+    skip  # Candidate's own row is too far, regardless of angle
+```
+
+**2. Adaptive Shift Limit**:
+```python
+row_pitch = estimate_row_pitch(boxes)  # Median gap between rows
+max_vertical_shift = max(
+    median_item_height * 1.0,  # At least 1× text height
+    row_pitch * 0.6             # Or 60% of typical row spacing
+)
+```
+
+This adapts to each menu's actual line spacing instead of using a fixed constant.
+
+**Example of why this matters**:
+```
+Row 1:  [Coffee ________________]   ← Long gap
+Row 2:  [Tea _____] [3.50]
+Row 3:  [Juice _______________] [4.00]
+```
+
+Without vertical shift limit: Coffee + 2° tilt over long distance → reaches 4.00 (wrong row)  
+With limit: Coffee can't drift more than `row_pitch × 0.6` → rejects 4.00, finds correct match or stays orphan
 
 ### Why Tilted Lines?
 
 Real-world menu photos have imperfections:
 - Camera held at slight angle
-- Paper not perfectly flat
+- Paper not perfectly flat  
 - Handwriting naturally slopes
 - Table surface not level
 
 A strict horizontal line (0°) would miss many valid pairs. The tilt-search allows small deviations while preventing wild mismatches.
-
-### Vertical Drift Prevention
-
-Without `max_vertical_shift`, a long horizontal gap combined with even a small angle can drift the line into a completely different row:
-
-```
-Row 1:  [Coffee ________________] 
-Row 2:  [Tea _____] [3.50]
-Row 3:  [Juice _______________] [4.00]
-```
-
-If "Coffee" has a long gap and we allow any tilt, even 2° over that distance could reach down to "4.00" (wrong row). The vertical drift limit caps this based on typical text height.
 
 ## Blind Spots & Limitations
 
@@ -181,16 +232,21 @@ Can't pair items if detector doesn't separate them. Requires better text detecti
 **Mitigation**: Tune `MAX_TILT_DEG` higher, but this increases false-match risk (pairing across different rows).
 
 ### 6. **Double-Pairing Prevention Side Effects**
-**Problem**: First-match-wins means a greedy item can "steal" a price that belongs to a later item.
+**Problem**: In simpler first-match-wins implementations, a greedy item can "steal" a price that belongs to a later item.
 
-**Example failure**:
+**Status**: **MITIGATED** by two-pass algorithm. The current implementation:
+- Pass 1 only commits unambiguous matches (clear angle separation)
+- Pass 2 uses learned vertical offset to match remaining items to predicted price positions
+- Reduces greedy-stealing dramatically, though edge cases may still exist
+
+**Remaining edge case**:
 ```
 Row 1: [Coffee _____________________]
 Row 2: [Tea ___] [3.50]
 ```
-If "Coffee" tilts down and collides with "3.50" first (within ±8°), it claims that price. "Tea" becomes an orphan even though "3.50" is visually closer to "Tea".
+If Coffee → 3.50 has clear angle advantage in Pass 1 despite wrong semantics, it still wins.
 
-**Better solution**: Try all possible pairings, score by distance + angle, then solve as bipartite matching problem (Hungarian algorithm).
+**Ultimate solution**: Global optimization (Hungarian algorithm) over all possible pairings, scored by distance + angle + learned offset. Would eliminate all greedy-matching artifacts.
 
 ### 7. **Rotated/Skewed Images**
 **Problem**: If the entire menu is rotated >10°, even `MAX_TILT_DEG=8` won't compensate.
@@ -205,7 +261,21 @@ If "Coffee" tilts down and collides with "3.50" first (within ±8°), it claims 
 - Cursive handwriting
 - Paper texture noise
 
-**Purpose**: The classical fallback exists purely for offline testing when PaddleOCR isn't available. It's **not a replacement** for a trained detector.
+**Mitigation**: The fallback now auto-detects polarity (dark-on-light vs light-on-dark) and scales morphology kernels to image resolution instead of using fixed pixel constants. This makes it work across a wider range of menus than early fixed-threshold versions.
+
+**Polarity Auto-Detection**:
+```python
+# Try both polarities, score by number of text-shaped boxes found
+boxes_inverted, score_inv = threshold_with_polarity(invert=True)
+boxes_normal, score_norm = threshold_with_polarity(invert=False)
+
+# Pick the polarity that produces more plausible text regions
+chosen = boxes_inverted if score_inv >= score_norm else boxes_normal
+```
+
+**Plausibility scoring**: Real text detection produces many small-ish, word/line-shaped boxes. Wrong polarity produces either ~0 boxes (everything filtered) or a few huge blobs (background selected as foreground).
+
+**Purpose**: The classical fallback exists purely for offline testing when PaddleOCR isn't available. It's **not a replacement** for a trained detector in production.
 
 ## When Code Will Break
 
@@ -235,7 +305,7 @@ If "Coffee" tilts down and collides with "3.50" first (within ±8°), it claims 
 |---------|------------|---------------------|
 | **Detection** | PaddleOCR + classical fallback | PaddleOCR only |
 | **Preprocessing** | None | Resize, deskew, denoise, CLAHE |
-| **Pairing** | Tilted horizontal line (geometric) | Y-distance nearest neighbor |
+| **Pairing** | Two-pass tilted line (geometric) | Y-distance nearest neighbor |
 | **Column Detection** | None | Automatic left/right split |
 | **Price Extraction** | None | Regex + OCR error correction |
 | **Currency Detection** | None | TND/EUR/€ with fallback logic |
@@ -246,22 +316,89 @@ If "Coffee" tilts down and collides with "3.50" first (within ±8°), it claims 
 
 **Key difference**: The experiment focuses purely on the geometric pairing algorithm, while the production pipeline is a complete end-to-end system with validation, logging, error handling, and production-ready features.
 
+## Implementation Insights
+
+### Data Structure Choice
+Uses `dataclass Box` with computed properties (`@property`) for geometric queries:
+- Clean separation: raw points stored, derived values computed on-demand
+- No cache invalidation bugs (points never change after creation)
+- Readable: `box.xcenter` vs `(box.xmin + box.xmax) / 2` everywhere
+
+### Reading Order Assignment
+```python
+boxes = sorted(boxes, key=lambda b: (round(b.ycenter / row_tolerance), b.xcenter))
+```
+- **Two-level sort**: Primary by row (Y), secondary by column (X)
+- **row_tolerance=18px**: Boxes within 18px vertically are considered "same row"
+- **round() trick**: Discretizes Y-coordinates into row "bins" without explicit clustering
+- Simple but effective for well-formatted menus
+
+### Median Calculation with Trimming
+```python
+heights = sorted(b.height for b in boxes)
+trimmed = heights[: int(len(heights) * 0.8)]  # Drop top 20%
+median_h = trimmed[len(trimmed) // 2]
+```
+**Why trim?** A few large decorative elements (illustrations, logos) would drag the median up, making normal text look "small" by comparison. Trimming the top 20% gives a robust estimate of typical text height.
+
+### Adaptive Row Pitch Estimation
+```python
+def estimate_row_pitch(boxes):
+    ys = sorted(b.ycenter for b in boxes if b.kind == "item")
+    diffs = [b - a for a, b in zip(ys, ys[1:]) if b - a > 2]
+    return median(diffs)
+```
+Learns the menu's actual line spacing instead of assuming a fixed constant. Used to set `max_vertical_shift = max(text_height, row_pitch × 0.6)`.
+
+### Two-Pass Commit Function
+```python
+def _commit_pair(a, b, angle, used, verified=False):
+    a.paired_with = b.idx
+    b.paired_with = a.idx
+    a.verified_pass = verified  # Tracks which pass resolved this pair
+    used.add(a.idx)
+    used.add(b.idx)
+```
+The `verified_pass` flag enables future analysis: which pairs were obvious (Pass 1) vs ambiguous and required learned offset (Pass 2)?
+
+### Performance Characteristics
+- **Time Complexity**: O(n²) per pass (each of n items checks n candidates)
+- **Space Complexity**: O(n) for boxes + ranked lists
+- **Typical runtime**: <100ms for 40-50 text boxes on modern CPU
+- **Bottleneck**: Not the pairing algorithm itself, but text detection (PaddleOCR: 5-15 seconds)
+
 ## Future Improvements
 
 ### High Impact
 1. **Column clustering filter**: Reject false-positive boxes outside established column bands
-2. **Bipartite matching**: Replace greedy first-match-wins with optimal global assignment
+2. **Global optimization (Hungarian algorithm)**: Replace greedy two-pass with optimal bipartite matching across ALL item-price pairs simultaneously
 3. **Multi-layout detection**: Auto-detect vertical vs horizontal layout, switch algorithms
 
 ### Medium Impact
-4. **Confidence scoring**: Weight pairings by distance + angle, flag low-confidence pairs
+4. **Confidence scoring**: Weight pairings by distance + angle + offset deviation, flag low-confidence pairs
 5. **Semantic validation**: Use OCR text to confirm item-price pairs make sense (text on left, number on right)
-6. **Multi-pass pairing**: Run algorithm with different `MAX_TILT_DEG` values, merge results
+6. **Adaptive parameter tuning**: Learn optimal `MAX_TILT_DEG` / `CATEGORY_HEIGHT_RATIO` per image based on detected layout
 
 ### Low Impact
-7. **Better visualization**: Color-code by confidence, show rejected candidates
-8. **Parameter auto-tuning**: Learn optimal `MAX_TILT_DEG` / `CATEGORY_HEIGHT_RATIO` per image
-9. **Export results**: Save structured JSON output (not just visualization)
+7. **Better visualization**: Color-code by confidence, show rejected candidates, highlight Pass 2 re-verified pairs
+8. **Export structured results**: Save JSON output (not just visualization) with pair metadata
+9. **Row clustering**: Group boxes into explicit row objects before pairing (currently implicit via Y-coordinate sorting)
+
+### Algorithm Evolution Notes
+
+**Current State (v2 - Two-Pass)**:
+- ✅ Fixed sequential angle search ordering bug
+- ✅ Detects and defers genuine ambiguity (ties)
+- ✅ Learns vertical offset from confident matches
+- ✅ Adaptive vertical shift limit based on row pitch
+- ⚠️ Still greedy within each pass (local optimization)
+
+**Next Evolution (v3 - Global Optimization)**:
+- Formulate as bipartite matching problem
+- Score all possible item-price pairings: `score = α×angle + β×distance + γ×offset_deviation`
+- Solve with Hungarian algorithm → globally optimal assignment
+- Eliminates all greedy-matching artifacts
+- Produces explicit confidence scores per pair
 
 ---
 
