@@ -1,0 +1,164 @@
+[
+  {
+    "type": "category",
+    "text": "Coffee"
+  },
+  {
+    "type": "item",
+    "name": "Espresso",
+    "price": 2.5
+  },
+  {
+    "type": "item",
+    "name": "Americano",
+    "price": 3.0
+  },
+  {
+    "type": "item",
+    "name": "Cappuccino",
+    "price": 3.75
+  },
+  {
+    "type": "item",
+    "name": "Latte",
+    "price": 4.0
+  },
+  {
+    "type": "item",
+    "name": "Flat White",
+    "price": 4.25
+  },
+  {
+    "type": "item",
+    "name": "Mocha",
+    "price": 4.5
+  },
+  {
+    "type": "item",
+    "name": "Macchiato",
+    "price": 3.5
+  },
+  {
+    "type": "item",
+    "name": "Cold Brew",
+    "price": 4.75
+  },
+  {
+    "type": "item",
+    "name": "Iced Latte",
+    "price": 4.5
+  },
+  {
+    "type": "item",
+    "name": "Affogato",
+    "price": 5.25
+  },
+  {
+    "type": "category",
+    "text": "Pastries"
+  },
+  {
+    "type": "item",
+    "name": "Croissant",
+    "price": 3.0
+  },
+  {
+    "type": "item",
+    "name": "Pain au Chocolat",
+    "price": 3.5
+  },
+  {
+    "type": "item",
+    "name": "Blueberry Muffin",
+    "price": 3.25
+  },
+  {
+    "type": "item",
+    "name": "Cinnamon Roll",
+    "price": 4.0
+  },
+  {
+    "type": "item",
+    "name": "Almond Tart",
+    "price": 4.5
+  },
+  {
+    "type": "item",
+    "name": "Banana Bread",
+    "price": 3.75
+  },
+  {
+    "type": "item",
+    "name": "Cheese Danish",
+    "price": 3.9
+  },
+  {
+    "type": "item",
+    "name": "Scone",
+    "price": 3.2
+  },
+  {
+    "type": "item",
+    "name": "Chocolate Brownie",
+    "price": 4.1
+  },
+  {
+    "type": "item",
+    "name": "Apple Turnover",
+    "price": 3.8
+  },
+  {
+    "type": "category",
+    "text": "Breakfast"
+  },
+  {
+    "type": "item",
+    "name": "Avocado Toast",
+    "price": 6.5
+  },
+  {
+    "type": "item",
+    "name": "Scrambled Eggs",
+    "price": 5.0
+  },
+  {
+    "type": "item",
+    "name": "Eggs Benedict",
+    "price": 7.5
+  },
+  {
+    "type": "item",
+    "name": "Granola Bowl",
+    "price": 5.5
+  },
+  {
+    "type": "item",
+    "name": "Breakfast Burrito",
+    "price": 7.0
+  },
+  {
+    "type": "item",
+    "name": "Smoked Salmon Bagel",
+    "price": 8.25
+  },
+  {
+    "type": "item",
+    "name": "Fruit Salad",
+    "price": 4.5
+  },
+  {
+    "type": "item",
+    "name": "Pancakes",
+    "price": 6.75
+  },
+  {
+    "type": "item",
+    "name": "French Toast",
+    "price": 6.9
+  },
+  {
+    "type": "item",
+    "name": "Omelette",
+    "price": 6.25
+  }
+]

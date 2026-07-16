@@ -39,3 +39,4 @@ data/samples/*
 .vscode/
 .idea/
 *.png
+*.svg
