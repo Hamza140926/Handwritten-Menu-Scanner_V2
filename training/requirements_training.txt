@@ -1,0 +1,22 @@
+# Training-specific requirements
+# Install with: pip install -r requirements_training.txt
+
+# Core training dependencies
+transformers>=4.30.0
+torch>=2.0.0
+torchvision>=0.15.0
+pillow>=9.0.0
+
+# Evaluation metrics
+evaluate>=0.4.0
+jiwer>=2.5.0
+
+# For data handling
+pandas>=1.5.0
+numpy>=1.24.0
+
+# For faster training on GPU (recommended for RTX 3050)
+accelerate>=0.20.0
+
+# Optional: for mixed precision training
+# apex  # Requires CUDA, install separately if needed
