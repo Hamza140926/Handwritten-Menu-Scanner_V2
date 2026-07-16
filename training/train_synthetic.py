@@ -92,9 +92,9 @@ def load_manifest(manifest_path: Path, split: str):
 
 def make_compute_metrics(processor):
     """Create metrics computation function for evaluation."""
-    import evaluate
-    cer_metric = evaluate.load("cer")
-    wer_metric = evaluate.load("wer")
+    from evaluate import load
+    cer_metric = load("cer")
+    wer_metric = load("wer")
 
     def compute_metrics(pred):
         pred_ids = pred.predictions
@@ -244,8 +244,8 @@ def main():
         learning_rate=args.lr,
         fp16=True,  # Always use mixed precision for speed
         fp16_full_eval=True,  # Use fp16 for evaluation too
-        dataloader_num_workers=4,  # Parallel data loading
-        dataloader_pin_memory=True,  # Faster GPU transfer
+        dataloader_num_workers=0,  # Disable workers on Windows (causes slowdown)
+        dataloader_pin_memory=False,  # Disable on Windows
         logging_steps=20,
         logging_first_step=True,
         load_best_model_at_end=True,
@@ -267,7 +267,7 @@ def main():
     print(f"  Gradient accumulation steps: {args.gradient_accumulation_steps}")
     print(f"  Effective batch size: {effective_batch_size}")
     print(f"  Mixed precision (FP16): Enabled")
-    print(f"  Data loader workers: 4")
+    print(f"  Data loader workers: 0 (Windows optimization)")
     
     # Create trainer
     trainer = Seq2SeqTrainer(
