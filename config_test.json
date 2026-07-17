@@ -1,0 +1,67 @@
+{
+  "preprocessing": {
+    "max_dimension": 2000,
+    "max_skew_degrees": 15.0,
+    "denoise_strength": 7,
+    "denoise_template_window": 7,
+    "denoise_search_window": 21,
+    "clahe_clip_limit": 2.5,
+    "clahe_tile_size": [
+      8,
+      8
+    ]
+  },
+  "detection": {
+    "model_name": "PP-OCRv5_mobile_det",
+    "min_box_area": 200,
+    "batch_size": 1,
+    "device": "cpu",
+    "enable_mkldnn": false,
+    "row_tolerance": 20
+  },
+  "recognition": {
+    "model_checkpoint": "models\\trocr_menu_v1\\checkpoints\\checkpoint-1538",
+    "batch_size": 16,
+    "max_new_tokens": 32,
+    "device": "auto",
+    "use_fp16_on_gpu": true
+  },
+  "postprocessing": {
+    "price_pattern": "\\b\\d{1,6}(?:[.,]\\d{1,3})?\\b",
+    "min_reasonable_price": 0.01,
+    "max_reasonable_price": 99999.0,
+    "currency_confidence_threshold": 0.85,
+    "default_currency": "TND",
+    "supported_currencies": [
+      "EUR",
+      "TND"
+    ]
+  },
+  "pipeline": {
+    "column_gap_factor": 2.0,
+    "max_y_distance": 60,
+    "relative_y_distance": false,
+    "min_confidence_warning": 0.5,
+    "max_orphan_price_ratio": 0.3
+  },
+  "validation": {
+    "max_file_size": 52428800,
+    "min_file_size": 1024,
+    "max_dimension": 10000,
+    "min_dimension": 100,
+    "allowed_extensions": [
+      ".bmp",
+      ".jpeg",
+      ".jpg",
+      ".png",
+      ".tif",
+      ".tiff"
+    ]
+  },
+  "optimization": {
+    "enable_tf32": true,
+    "enable_cudnn_benchmark": true,
+    "clear_cache_after_batch": true,
+    "warmup_gpu_on_startup": true
+  }
+}
