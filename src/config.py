@@ -61,8 +61,12 @@ class RecognitionConfig:
     """Handwriting recognition configuration."""
     
     # Model selection
-    model_checkpoint: str = "microsoft/trocr-base-handwritten"
-    # Alternatives: "microsoft/trocr-large-handwritten" (more accurate, slower)
+    model_checkpoint: str = "models/trocr_menu_v1/checkpoints/checkpoint-1538"
+    # Alternatives: 
+    # "microsoft/trocr-base-handwritten" (pretrained base model)
+    # "microsoft/trocr-large-handwritten" (more accurate, slower)
+    # "models/trocr_menu_v1/checkpoints/checkpoint-769" (epoch 1)
+    # "models/trocr_menu_v1/checkpoints/checkpoint-1538" (epoch 2 - current)
     
     # Processing parameters
     batch_size: int = 16  # Higher = faster but more GPU memory

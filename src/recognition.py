@@ -64,6 +64,7 @@ def _get_model():
             if _model is None:
                 try:
                     from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+                    import os
                     
                     cfg = get_config().recognition
                     
@@ -75,8 +76,24 @@ def _get_model():
                     
                     logger.info("Loading TrOCR model", extra={"checkpoint": cfg.model_checkpoint, "device": _device})
 
-                    _processor = TrOCRProcessor.from_pretrained(cfg.model_checkpoint)
-                    _model = VisionEncoderDecoderModel.from_pretrained(cfg.model_checkpoint)
+                    # Check if this is a local checkpoint path (missing processor files)
+                    # Checkpoints only save model weights, not processor config
+                    is_local_checkpoint = (
+                        os.path.exists(cfg.model_checkpoint) and 
+                        os.path.isdir(cfg.model_checkpoint) and
+                        not os.path.exists(os.path.join(cfg.model_checkpoint, "preprocessor_config.json"))
+                    )
+                    
+                    if is_local_checkpoint:
+                        # Load processor from base model, weights from checkpoint
+                        base_model = "microsoft/trocr-base-handwritten"
+                        logger.info("Loading processor from base model", extra={"base": base_model})
+                        _processor = TrOCRProcessor.from_pretrained(base_model)
+                        _model = VisionEncoderDecoderModel.from_pretrained(cfg.model_checkpoint)
+                    else:
+                        # Standard loading (works for HuggingFace models and full saves)
+                        _processor = TrOCRProcessor.from_pretrained(cfg.model_checkpoint)
+                        _model = VisionEncoderDecoderModel.from_pretrained(cfg.model_checkpoint)
 
                     if _device == "cuda" and cfg.use_fp16_on_gpu:
                         _model = _model.half().to(_device)
@@ -84,7 +101,7 @@ def _get_model():
                         _model = _model.to(_device)
                     _model.eval()
 
-                    logger.info("TrOCR model loaded successfully", extra={"checkpoint": _model.name_or_path, "device": _device})
+                    logger.info("TrOCR model loaded successfully", extra={"checkpoint": cfg.model_checkpoint, "device": _device})
                 
                 except Exception as e:
                     logger.exception("Failed to load TrOCR model")
@@ -118,12 +135,19 @@ def _mean_token_confidence(scores, sequences, pad_token_id) -> list:
     # scores[t]: (batch, vocab) logits for decoding step t.
     # sequences[:, 0] is the BOS/decoder-start token, so generated tokens
     # start at sequences[:, 1:], aligned 1:1 with scores.
+    # BUT: scores length might be shorter than sequences if generation stopped early
     step_probs = []
     for t, step_logits in enumerate(scores):
         probs = torch.softmax(step_logits.float(), dim=-1)
+        # Bounds check: t+1 must be valid index in sequences
+        if t + 1 >= sequences.shape[1]:
+            break
         chosen_ids = sequences[:, t + 1]
         chosen_probs = probs.gather(1, chosen_ids.unsqueeze(1)).squeeze(1)
         step_probs.append(chosen_probs)
+
+    if not step_probs:
+        return [1.0] * sequences.shape[0]
 
     step_probs = torch.stack(step_probs, dim=1)  # (batch, num_steps)
     generated = sequences[:, 1:1 + step_probs.shape[1]]

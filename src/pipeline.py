@@ -50,6 +50,7 @@ from preprocessing import preprocess_image
 from detection import detect_text_regions
 from recognition import recognize_regions
 from postprocess import process_recognition_results
+from pairing import pair_regions_advanced
 from validation import validate_image_input, validate_currency, ValidationError
 from exceptions import (
     PipelineError, PreprocessingError, DetectionError, 
@@ -208,11 +209,14 @@ def assemble_menu(processed_regions: list, max_y_distance: float = None) -> dict
     category headers, named items with prices, and any orphaned prices
     that need manual review.
     
+    Uses advanced tilted-line pairing algorithm from pairing.py for better
+    accuracy than simple y-distance nearest-neighbor.
+    
     Also calculates quality metrics to help identify low-quality scans.
 
     Returns a dict:
-        "items":          list from pair_items()
-        "orphan_prices":  list from pair_items()
+        "items":          list from pair_regions_advanced()
+        "orphan_prices":  list from pair_regions_advanced()
         "quality_metrics": dict with:
             "total_regions": total text regions detected
             "items_with_prices": count of items with prices
@@ -224,14 +228,10 @@ def assemble_menu(processed_regions: list, max_y_distance: float = None) -> dict
             "ambiguous_prices": count of prices flagged as ambiguous
             "warnings": list of quality warnings
     """
-    if max_y_distance is None:
-        max_y_distance = get_config().pipeline.max_y_distance
-    
     cfg = get_config().pipeline
     
-    left, right = split_columns(processed_regions)
-    name_column, price_column = identify_name_and_price_columns(left, right)
-    items, orphan_prices = pair_items(name_column, price_column, max_y_distance)
+    # Use advanced pairing algorithm (replaces simple y-distance pairing)
+    items, orphan_prices = pair_regions_advanced(processed_regions)
     
     # Calculate quality metrics
     total_regions = len(processed_regions)
