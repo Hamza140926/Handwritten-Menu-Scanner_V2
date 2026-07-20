@@ -31,13 +31,20 @@ sidequest/
 │   └── ...
 │
 └── synthetic/                       # Our dataset generation scripts
-    ├── generate_synthetic_dataset.py   # Main generation script
+    ├── generate_synthetic_dataset.py   # Main menu dataset generation
+    ├── generate_numbers_dataset.py     # Numbers-only dataset generation (NEW)
+    ├── clean_dataset.py                # Interactive dataset cleaning tool (NEW)
     ├── vocabulary.py                   # Menu items and price formatting
     ├── augment.py                      # Photo-realism augmentation
-    ├── dataset_analysis.ipynb          # Quality checks and validation
+    ├── dataset_analysis.ipynb          # Quality checks for main dataset
+    ├── dataset_numbers_analysis.ipynb  # Quality checks for numbers dataset (NEW)
     ├── README_SYNTHETIC.md             # Detailed usage instructions
-    └── dataset_synth/                  # Generated output (created by script)
-        ├── crops/                      # PNG images of handwritten text
+    ├── dataset_synth/                  # Generated menu dataset
+    │   ├── crops/                      # PNG images of handwritten text
+    │   ├── manifest.csv                # Labels and metadata
+    │   └── _tmp_svg/                   # Temporary SVG files
+    └── dataset_numbers/                # Generated numbers dataset (NEW)
+        ├── crops/                      # PNG images of handwritten numbers
         ├── manifest.csv                # Labels and metadata
         └── _tmp_svg/                   # Temporary SVG files
 ```
@@ -149,7 +156,7 @@ pip install cairosvg opencv-python
 
 ## Usage
 
-### Generate Dataset
+### Generate Full Menu Dataset
 
 **Basic usage (small dataset for testing):**
 ```bash
@@ -189,20 +196,101 @@ python generate_synthetic_dataset.py \
 - × `samples_per_field` = total crops
 - Example: `--samples_per_field 10` → ~1,910 total images
 
+---
+
+### Generate Numbers Dataset (NEW)
+
+For fine-tuning number/price recognition specifically, use the numbers dataset generator:
+
+**Generate numbers dataset:**
+```bash
+cd C:\Users\zussl\Desktop\sidequest\synthetic
+conda activate handwriting
+
+python generate_numbers_dataset.py \
+    --out_dir dataset_numbers/ \
+    --repo_dir ..\handwriting-synthesis-master \
+    --samples_per_price 5
+```
+
+**What it generates:**
+- Numbers 0-99 (no currency symbols)
+- Multiple formats:
+  - Integers: `0`, `1`, `2`, ..., `99`
+  - 2 decimals: `5.50`, `12.00`, `8.75`
+  - 3 decimals: `5.500`, `12.000` (TND style)
+  - Comma separator: `5,50`, `12,00` (EU style)
+- ~200 unique numbers × 5 samples = ~1,000 total crops
+
+**Parameters:**
+- `--out_dir`: Output directory for numbers dataset
+- `--repo_dir`: Path to handwriting-synthesis-master repository
+- `--samples_per_price`: How many style/bias variations per number (default: 5)
+- `--seed`: Random seed for reproducibility (default: 42)
+
+**Use case:** Continue training from an existing checkpoint to improve number recognition accuracy:
+```bash
+python ../../training/train_synthetic.py \
+    --base_checkpoint ../../models/trocr_menu_v1_epoch2 \
+    --dataset_dir dataset_numbers/ \
+    --output_model_dir ../../models/trocr_menu_v2_numbers \
+    --max_epochs 3 \
+    --lr 1e-5
+```
+
+---
+
+### Clean Dataset (NEW)
+
+After generating a dataset, use the interactive cleaning tool to review and remove invalid samples:
+
+**Run the cleaning tool:**
+```bash
+cd C:\Users\zussl\Desktop\sidequest\synthetic
+conda activate handwriting
+
+python clean_dataset.py --dataset_dir dataset_numbers
+```
+
+**Controls:**
+- **ENTER** or **SPACE**: Mark as valid (keep sample)
+- **X**: Mark as invalid (delete sample)
+- **S**: Skip (no decision)
+- **B**: Go back to previous sample
+- **Q** or **ESC**: Quit and process results
+
+**What it does:**
+1. Displays each image with its label and metadata
+2. Lets you review quality one-by-one
+3. Marks invalid samples for deletion
+4. Deletes invalid images and updates manifest.csv
+5. Backs up original manifest before modifications
+
+**When to use:**
+- After generating a dataset for the first time
+- If you notice quality issues during training
+- Before fine-tuning to ensure data quality
+
 ### Analyze Dataset Quality
 
 **Before training**, always run the analysis notebook:
 
+**For full menu dataset:**
 ```bash
 jupyter notebook dataset_analysis.ipynb
 ```
 
-The notebook checks:
+**For numbers dataset:**
+```bash
+jupyter notebook dataset_numbers_analysis.ipynb
+```
+
+Both notebooks check:
 1. ✅ **Style leakage** - Should be ZERO overlap (critical)
-2. ✅ **Vocabulary overlap** - Reports how much (expected to be high)
-3. ✅ **Character coverage** - No unseen characters in val/test
+2. ✅ **Format distribution** - Variety in number/text formats
+3. ✅ **Number/text coverage** - What appears in each split
 4. ✅ **Image quality** - No blank/corrupted images
-5. ✅ **Diversity** - Price formats, style distribution, bias range
+5. ✅ **Diversity** - Style distribution, bias range
 6. ✅ **Visual samples** - Grid of rendered crops
 
 **Go/No-Go decision:** If all checks pass, proceed to training. If style leakage detected, regenerate dataset.
@@ -258,6 +346,8 @@ Simulates real menu handwriting variety:
 
 ## Dataset Size Guidelines
 
+### Full Menu Dataset
+
 | Samples/Field | Total Crops | Use Case |
 |---------------|-------------|----------|
 | 3 | ~573 | Pipeline testing, proof-of-concept |
@@ -265,6 +355,15 @@ Simulates real menu handwriting variety:
 | 10 | ~1,910 | Small but usable dataset |
 | 20 | ~3,820 | Recommended for training |
 | 50 | ~9,550 | Large, robust dataset |
+
+### Numbers Dataset
+
+| Samples/Price | Total Crops | Use Case |
+|---------------|-------------|----------|
+| 3 | ~600 | Quick testing |
+| 5 | ~1,000 | Minimum for fine-tuning (recommended) |
+| 10 | ~2,000 | Strong number recognition |
+| 20 | ~4,000 | Production-quality |
 
 **Rule of thumb:** More is better, but diminishing returns after ~5,000 samples for fine-tuning pre-trained models.
 
@@ -298,11 +397,13 @@ Simulates real menu handwriting variety:
 
 ## Next Steps After Generation
 
-1. **Run `dataset_analysis.ipynb`** - Validate quality
-2. **Train OCR model** - Use TrOCR or similar
-3. **Evaluate on synthetic test set** - Get baseline metrics
-4. **Evaluate on real photos** - The real validation (expect CER gap)
-5. **Iterate** - Adjust augmentation, generate more samples, or collect real data
+1. **Clean dataset (optional)** - Run `clean_dataset.py` to remove invalid samples
+2. **Run analysis notebook** - Validate quality with `dataset_analysis.ipynb` or `dataset_numbers_analysis.ipynb`
+3. **Train OCR model** - Use TrOCR or similar (see `training/train_synthetic.py`)
+4. **Evaluate on synthetic test set** - Get baseline metrics
+5. **Evaluate on real photos** - The real validation (expect CER gap)
+6. **Fine-tune for numbers** - If needed, generate numbers dataset and continue training
+7. **Iterate** - Adjust augmentation, generate more samples, or collect real data
 
 ---
 
@@ -357,7 +458,7 @@ Each style (0-12) represents a different person's handwriting:
 
 ## Authors
 
-- Dataset generation scripts: [Your name]
+- Dataset generation scripts: [Hamza Slimani]
 - Handwriting-synthesis model: Sean Vasquez
 
 ---
@@ -378,3 +479,12 @@ A: Yes! Edit `vocabulary.py` → `CATEGORIES` dict. Add your items, then regener
 
 **Q: Why is test/val text overlapping with train?**
 A: Intentional. See "Style-Disjoint Split Strategy" section. Priority is style generalization.
+
+**Q: Should I train on the full menu dataset or numbers dataset first?**
+A: Train on the full menu dataset first, then fine-tune with the numbers dataset if number recognition is weak.
+
+**Q: How do I know if I need the numbers dataset?**
+A: If your model performs well on names but struggles with prices/numbers, generate and train on the numbers dataset as a second fine-tuning stage.
+
+**Q: Can I combine both datasets?**
+A: Yes, you can merge the manifest.csv files and combine the crops directories, but training in stages (full menu → numbers) often works better.
