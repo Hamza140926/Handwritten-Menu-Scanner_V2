@@ -29,6 +29,17 @@ logger = get_logger(__name__)
 # Tunables from pairing_experiment.py
 MAX_TILT_DEG = 8.0              # Max angle to tilt pairing line
 CATEGORY_HEIGHT_RATIO = 1.35    # Box taller than median*this = category
+NOISE_HEIGHT_RATIO = 4.0        # Box taller than median*this = decorative
+                                 # illustration blob, not text - excluded
+                                 # entirely from classification/pairing AND
+                                 # from recognition (see build_skeleton).
+                                 # This was present in pairing_experiment.py
+                                 # but got dropped when the algorithm was
+                                 # ported here - restored because leaving
+                                 # illustration blobs in the height pool
+                                 # skews the median that category_cutoff is
+                                 # computed from, which was misclassifying
+                                 # real categories/items around them.
 MAX_VERTICAL_SHIFT_RATIO = 1.0  # Max row-jumping (multiples of median height)
 AMBIGUITY_MARGIN_DEG = 1.5      # Degree difference to treat as tie
 
@@ -71,8 +82,9 @@ class Box:
 
 def classify_boxes(boxes: List[Box]) -> float:
     """
-    Classify boxes as 'category' (headers) or 'item' based on height.
-    
+    Classify boxes as 'noise' (decorative/illustration, excluded entirely),
+    'category' (headers), or 'item' based on height.
+
     Returns median item height for use in pairing.
     """
     if not boxes:
@@ -85,14 +97,18 @@ def classify_boxes(boxes: List[Box]) -> float:
     median_h = trimmed[len(trimmed) // 2]
     
     category_cutoff = median_h * CATEGORY_HEIGHT_RATIO
-    
+    noise_cutoff = median_h * NOISE_HEIGHT_RATIO
+
     for b in boxes:
-        if b.height > category_cutoff:
+        if b.height > noise_cutoff:
+            b.kind = "noise"
+        elif b.height > category_cutoff:
             b.kind = "category"
         else:
             b.kind = "item"
-    
-    logger.debug(f"Classified {sum(1 for b in boxes if b.kind == 'category')} categories, "
+
+    logger.debug(f"Classified {sum(1 for b in boxes if b.kind == 'noise')} noise, "
+                 f"{sum(1 for b in boxes if b.kind == 'category')} categories, "
                  f"{sum(1 for b in boxes if b.kind == 'item')} items")
     
     return median_h
@@ -271,8 +287,166 @@ def assign_groups(boxes: List[Box]) -> List[Box]:
     return categories
 
 
+def build_skeleton(regions: List[dict]) -> List[dict]:
+    """
+    Build the category/item/pairing skeleton straight from detection
+    output - BEFORE recognition ever runs.
+
+    Every decision made here (noise vs. category vs. item, which name
+    pairs with which price, which category a box belongs under) is
+    computed purely from box geometry (position, height, angle). None of
+    it depends on recognized text, so none of it can be corrupted by a
+    bad OCR read - a box's structural role in the menu is settled before
+    its content is ever known. This also means noise boxes (illustrations,
+    decorative headers) are identified and can be dropped BEFORE the
+    (expensive) recognition step ever sees them, instead of after.
+
+    Args:
+        regions: list of dicts from detection.detect_text_regions - only
+            "box", "x", "y" are used; "crop"/"text" are not needed here.
+
+    Returns:
+        List of dicts, same length/order as `regions`, each with:
+            "box_id":   index into `regions` - use this to re-attach
+                        recognized text/price to the right box later
+            "role":     "category" | "item_name" | "item_price" |
+                        "unresolved" | "noise"
+                "unresolved" = an item-kind box that never found a
+                pairing partner by geometry. This is the one case
+                geometry genuinely can't settle on its own: a price
+                written with no item nearby and an item with no price
+                (e.g. "market price") look identical from position
+                alone. It's left for the assembly stage to resolve
+                using the same price-parsing logic as everything else,
+                once recognized text is available.
+            "pair_id":  box_id of its paired counterpart, or None
+            "group_id": box_id of the category header it sits under
+                        (item-kind boxes only), or None
+    """
+    if not regions:
+        return []
+
+    boxes = [Box(i, r) for i, r in enumerate(regions)]
+    median_height = classify_boxes(boxes)
+    run_pairing(boxes, median_height)
+    assign_groups(boxes)
+
+    skeleton = []
+    for box in boxes:
+        if box.kind == "noise":
+            role, pair_id = "noise", None
+        elif box.kind == "category":
+            role, pair_id = "category", None
+        elif box.paired_with is not None:
+            other = boxes[box.paired_with]
+            role = "item_name" if box.xcenter < other.xcenter else "item_price"
+            pair_id = other.idx
+        else:
+            role, pair_id = "unresolved", None
+
+        skeleton.append({
+            "box_id": box.idx,
+            "role": role,
+            "pair_id": pair_id,
+            "group_id": box.group if box.kind == "item" else None,
+        })
+
+    logger.info(
+        "Skeleton built",
+        extra={
+            "categories": sum(1 for s in skeleton if s["role"] == "category"),
+            "paired_item_boxes": sum(1 for s in skeleton if s["role"] in ("item_name", "item_price")),
+            "unresolved": sum(1 for s in skeleton if s["role"] == "unresolved"),
+            "noise_excluded": sum(1 for s in skeleton if s["role"] == "noise"),
+        },
+    )
+    return skeleton
+
+
+def build_skeleton(regions: List[dict]) -> List[dict]:
+    """
+    Build the category/item/pairing skeleton straight from detection
+    output - BEFORE recognition ever runs.
+
+    Every decision made here (noise vs. category vs. item, which name
+    pairs with which price, which category a box belongs under) is
+    computed purely from box geometry (position, height, angle). None of
+    it depends on recognized text, so none of it can be corrupted by a
+    bad OCR read - a box's structural role in the menu is settled before
+    its content is ever known. This also means noise boxes (illustrations,
+    decorative headers) are identified and can be dropped BEFORE the
+    (expensive) recognition step ever sees them, instead of after.
+
+    Args:
+        regions: list of dicts from detection.detect_text_regions - only
+            "box", "x", "y" are used; "crop"/"text" are not needed here.
+
+    Returns:
+        List of dicts, same length/order as `regions`, each with:
+            "box_id":   index into `regions` - use this to re-attach
+                        recognized text/price to the right box later
+            "role":     "category" | "item_name" | "item_price" |
+                        "unresolved" | "noise"
+                "unresolved" = an item-kind box that never found a
+                pairing partner by geometry. This is the one case
+                geometry genuinely can't settle on its own: a price
+                written with no item nearby and an item with no price
+                (e.g. "market price") look identical from position
+                alone. It's left for the assembly stage to resolve
+                using the same price-parsing logic as everything else,
+                once recognized text is available.
+            "pair_id":  box_id of its paired counterpart, or None
+            "group_id": box_id of the category header it sits under
+                        (item-kind boxes only), or None
+    """
+    if not regions:
+        return []
+
+    boxes = [Box(i, r) for i, r in enumerate(regions)]
+    median_height = classify_boxes(boxes)
+    run_pairing(boxes, median_height)
+    assign_groups(boxes)
+
+    skeleton = []
+    for box in boxes:
+        if box.kind == "noise":
+            role, pair_id = "noise", None
+        elif box.kind == "category":
+            role, pair_id = "category", None
+        elif box.paired_with is not None:
+            other = boxes[box.paired_with]
+            role = "item_name" if box.xcenter < other.xcenter else "item_price"
+            pair_id = other.idx
+        else:
+            role, pair_id = "unresolved", None
+
+        skeleton.append({
+            "box_id": box.idx,
+            "role": role,
+            "pair_id": pair_id,
+            "group_id": box.group if box.kind == "item" else None,
+        })
+
+    logger.info(
+        "Skeleton built",
+        extra={
+            "categories": sum(1 for s in skeleton if s["role"] == "category"),
+            "paired_item_boxes": sum(1 for s in skeleton if s["role"] in ("item_name", "item_price")),
+            "unresolved": sum(1 for s in skeleton if s["role"] == "unresolved"),
+            "noise_excluded": sum(1 for s in skeleton if s["role"] == "noise"),
+        },
+    )
+    return skeleton
+
+
 def pair_regions_advanced(regions: List[dict]) -> Tuple[List[dict], List[dict]]:
     """
+    LEGACY: pairs item names with prices AFTER recognition, using already-
+    recognized regions. Superseded by build_skeleton(), which runs the
+    same underlying geometry (classify_boxes/run_pairing/assign_groups)
+    right after detection, before recognition - kept here only for any
+    caller still depending on this post-recognition entry point.
+
     Pair item names with prices using advanced tilted-line algorithm.
     
     This replaces the simple y-distance pairing in pipeline.py with the

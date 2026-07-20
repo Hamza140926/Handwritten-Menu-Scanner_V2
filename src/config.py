@@ -48,6 +48,35 @@ class DetectionConfig:
     min_box_area: int = 200  # px² - filter out tiny boxes (noise)
     batch_size: int = 1  # for detection (usually 1 for single images)
     
+    # Detection strategy presets for interactive retry
+    strategies: dict = None  # Will be set in __post_init__
+    
+    def __post_init__(self):
+        if self.strategies is None:
+            self.strategies = {
+                "default": {
+                    "model_name": "PP-OCRv5_mobile_det",
+                    "min_box_area": 200,
+                    "description": "Balanced - good for most menus"
+                },
+                "sensitive": {
+                    "model_name": "PP-OCRv5_mobile_det",
+                    "min_box_area": 100,
+                    "description": "Sensitive - catch smaller/faint text"
+                },
+                "strict": {
+                    "model_name": "PP-OCRv5_mobile_det",
+                    "min_box_area": 400,
+                    "description": "Strict - filter out small noise/artifacts"
+                },
+                "server": {
+                    "model_name": "PP-OCRv5_server_det",
+                    "min_box_area": 200,
+                    "description": "High accuracy - larger model, slower"
+                },
+            }
+    
+    
     # Device selection
     device: str = "cpu"  # "cpu" or "gpu:0"
     enable_mkldnn: bool = False  # MKL-DNN optimization (disabled due to PaddlePaddle bug)

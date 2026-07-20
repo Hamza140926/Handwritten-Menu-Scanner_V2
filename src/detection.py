@@ -222,15 +222,65 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = None) -> list:
         raise DetectionError(f"Detection pipeline failed: {e}") from e
 
 
-def draw_regions_debug(image: np.ndarray, regions: list) -> np.ndarray:
-    """Draw detected region boxes on a copy of the image — useful for
-    visually sanity-checking detection quality during development."""
+def draw_regions_debug(image: np.ndarray, regions: list, skeleton: list = None) -> np.ndarray:
+    """Draw detected region boxes on a copy of the image with optional
+    skeleton classification overlay (categories, items, noise, pairings).
+    
+    Args:
+        image: source image (BGR)
+        regions: list of region dicts from detect_text_regions
+        skeleton: optional skeleton from pairing.build_skeleton() - if
+                  provided, boxes are color-coded by role and pairing
+                  lines are drawn
+    
+    Color coding when skeleton provided:
+        - Green: item boxes (will be paired)
+        - Orange: category headers
+        - Gray: noise (excluded from recognition)
+        - Red: unresolved (no pair found)
+        - Blue→Orange lines: pairing connections (color shift = tilt angle)
+    """
     debug_image = image.copy()
-    for i, region in enumerate(regions):
-        box = region["box"].astype(int)
-        cv2.polylines(debug_image, [box], isClosed=True, color=(0, 255, 0), thickness=2)
-        cv2.putText(debug_image, str(i), tuple(box[0]),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+    
+    if skeleton is None:
+        # Simple mode: just green boxes with numbers
+        for i, region in enumerate(regions):
+            box = region["box"].astype(int)
+            cv2.polylines(debug_image, [box], isClosed=True, color=(0, 255, 0), thickness=2)
+            cv2.putText(debug_image, str(i), tuple(box[0]),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+    else:
+        # Enhanced mode: color-code by role and draw pairing lines
+        # First pass: draw pairing lines (background layer)
+        for entry in skeleton:
+            if entry["role"] not in ("item_name", "item_price") or entry["pair_id"] is None:
+                continue
+            # Draw line from this box to its pair
+            box1 = regions[entry["box_id"]]["box"]
+            box2 = regions[entry["pair_id"]]["box"]
+            x1, y1 = int(box1[:, 0].max()), int((box1[:, 1].min() + box1[:, 1].max()) / 2)
+            x2, y2 = int(box2[:, 0].min()), int((box2[:, 1].min() + box2[:, 1].max()) / 2)
+            # Simple blue line (can enhance with tilt-based color later)
+            cv2.line(debug_image, (x1, y1), (x2, y2), (255, 100, 0), 2)
+        
+        # Second pass: draw boxes color-coded by role
+        for i, entry in enumerate(skeleton):
+            box = regions[entry["box_id"]]["box"].astype(int)
+            role = entry["role"]
+            
+            if role == "noise":
+                color, thickness = (150, 150, 150), 2  # gray
+            elif role == "category":
+                color, thickness = (0, 140, 255), 3    # orange
+            elif role == "unresolved":
+                color, thickness = (0, 0, 255), 3      # red
+            else:  # item_name or item_price
+                color, thickness = (0, 255, 0), 2       # green
+            
+            cv2.polylines(debug_image, [box], isClosed=True, color=color, thickness=thickness)
+            cv2.putText(debug_image, str(entry["box_id"]), tuple(box[0]),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+    
     return debug_image
 
 
