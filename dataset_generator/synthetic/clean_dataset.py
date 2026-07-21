@@ -79,6 +79,8 @@ class DatasetCleaner:
         text_label = f"Label: '{sample['text']}'"
         text_split = f"Split: {sample['split']}"
         text_style = f"Style: {sample['style_id']} | Bias: {sample['bias']}"
+        text_type = f"Type: {sample.get('field_type', 'N/A')}"
+        text_source = f"Source: {sample.get('source', 'N/A')}"
         text_progress = f"Progress: {idx + 1}/{len(self.samples)}"
         text_stats = f"Valid: {len(self.valid)} | Invalid: {len(self.invalid)}"
         
@@ -87,6 +89,10 @@ class DatasetCleaner:
         cv2.putText(display, text_split, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 
                     0.5, (100, 100, 100), 1)
         cv2.putText(display, text_style, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 
+                    0.5, (100, 100, 100), 1)
+        cv2.putText(display, text_type, (250, 50), cv2.FONT_HERSHEY_SIMPLEX, 
+                    0.5, (100, 100, 100), 1)
+        cv2.putText(display, text_source, (250, 70), cv2.FONT_HERSHEY_SIMPLEX, 
                     0.5, (100, 100, 100), 1)
         cv2.putText(display, text_progress, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 
                     0.5, (0, 0, 255), 1)
