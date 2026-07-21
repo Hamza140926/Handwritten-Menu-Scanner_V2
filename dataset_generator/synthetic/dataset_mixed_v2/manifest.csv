@@ -1,0 +1,1300 @@
+crop_path,text,split,field_type,style_id,bias,source,category,vocab_bucket
+crops/mixed_01164.png,9.84 DT,train,price,8,0.94,synthetic,Coffee,train
+crops/mixed_00212.png,16.000,train,price,3,0.823,numbers,,
+crops/mixed_00464.png,"4,50",train,price,10,0.770,numbers,,
+crops/mixed_00560.png,50.00,train,price,9,0.605,numbers,,
+crops/mixed_01296.png,Ginger Beer,train,name,0,0.41,synthetic,Soft Drinks,train
+crops/mixed_00066.png,10.50,train,price,9,0.568,numbers,,
+crops/mixed_00502.png,42,train,price,6,0.453,numbers,,
+crops/mixed_00427.png,35,train,price,4,0.487,numbers,,
+crops/mixed_00540.png,"5,00",train,price,7,0.509,numbers,,
+crops/mixed_00402.png,"30,00",train,price,9,0.724,numbers,,
+crops/mixed_00975.png,8.84,test,price,3,0.41,synthetic,Tea,train
+crops/mixed_00852.png,90.00,train,price,0,0.860,numbers,,
+crops/mixed_01007.png,11 DT,test,price,10,0.87,synthetic,Sandwiches,val
+crops/mixed_00222.png,"17,00",train,price,0,0.687,numbers,,
+crops/mixed_00404.png,"30,00",train,price,8,0.317,numbers,,
+crops/mixed_00303.png,"20,00",train,price,3,0.938,numbers,,
+crops/mixed_01054.png,10.10 TND,train,price,9,0.73,synthetic,Tea,val
+crops/mixed_00498.png,40.000,train,price,10,0.678,numbers,,
+crops/mixed_01053.png,2.800 DT,train,price,5,0.93,synthetic,Sandwiches,val
+crops/mixed_00659.png,"65,00",train,price,2,0.861,numbers,,
+crops/mixed_00132.png,12.500,train,price,8,0.457,numbers,,
+crops/mixed_00862.png,91,train,price,1,0.998,numbers,,
+crops/mixed_00898.png,"99,00",train,price,3,0.821,numbers,,
+crops/mixed_00869.png,92,train,price,5,0.735,numbers,,
+crops/mixed_00455.png,4,train,price,7,0.405,numbers,,
+crops/mixed_01020.png,3.090,test,price,3,0.68,synthetic,Sandwiches,train
+crops/mixed_00015.png,1,train,price,12,0.903,numbers,,
+crops/mixed_00795.png,84,train,price,6,0.365,numbers,,
+crops/mixed_00793.png,83,train,price,12,0.562,numbers,,
+crops/mixed_01156.png,11.680 dt,train,price,9,0.47,synthetic,Sandwiches,val
+crops/mixed_00876.png,95,train,price,11,0.718,numbers,,
+crops/mixed_00187.png,15,train,price,5,0.380,numbers,,
+crops/mixed_00915.png,4.600,val,price,12,0.78,synthetic,Pastries,train
+crops/mixed_00055.png,10.00,train,price,4,0.323,numbers,,
+crops/mixed_00925.png,Scone,val,name,7,0.46,synthetic,Pastries,train
+crops/mixed_01243.png,Ice Cream Scoop,train,name,11,0.94,synthetic,Desserts,train
+crops/mixed_00667.png,65.000,train,price,3,0.488,numbers,,
+crops/mixed_00423.png,33,train,price,6,0.547,numbers,,
+crops/mixed_00628.png,"60,00",train,price,4,0.638,numbers,,
+crops/mixed_00803.png,85.000,train,price,6,0.725,numbers,,
+crops/mixed_01102.png,Chicken Salad,train,name,9,0.65,synthetic,Salads,train
+crops/mixed_00711.png,70,train,price,11,0.618,numbers,,
+crops/mixed_01091.png,TEA,train,header,1,0.65,synthetic,Tea,train
+crops/mixed_00895.png,99,train,price,12,0.854,numbers,,
+crops/mixed_00710.png,70,train,price,7,0.873,numbers,,
+crops/mixed_00454.png,4,train,price,3,0.924,numbers,,
+crops/mixed_00908.png,99.000,val,price,5,0.803,numbers,,
+crops/mixed_00328.png,22.00,train,price,10,0.883,numbers,,
+crops/mixed_00860.png,91,train,price,11,0.974,numbers,,
+crops/mixed_00770.png,8.000,train,price,9,0.728,numbers,,
+crops/mixed_01162.png,Lemon Mint,train,name,1,0.43,synthetic,Juices & Smoothies,train
+crops/mixed_01092.png,Mint Tea,train,name,11,0.77,synthetic,Tea,train
+crops/mixed_00894.png,99,train,price,11,0.671,numbers,,
+crops/mixed_00503.png,42,train,price,5,0.682,numbers,,
+crops/mixed_01210.png,11,train,price,6,0.64,synthetic,Tea,train
+crops/mixed_01169.png,"11,67",train,price,4,0.55,synthetic,Pastries,train
+crops/mixed_01067.png,8.57,train,price,11,0.69,synthetic,Desserts,train
+crops/mixed_01120.png,10,train,price,2,0.42,synthetic,Coffee,train
+crops/mixed_01222.png,4,train,price,6,0.66,synthetic,Desserts,train
+crops/mixed_01075.png,Eggs Benedict,train,name,9,0.43,synthetic,Breakfast,train
+crops/mixed_00842.png,90,train,price,7,0.394,numbers,,
+crops/mixed_01118.png,Macchiato,train,name,11,0.62,synthetic,Coffee,train
+crops/mixed_00160.png,13.500,train,price,12,0.487,numbers,,
+crops/mixed_00845.png,90,train,price,9,0.815,numbers,,
+crops/mixed_00829.png,9.00,train,price,11,0.353,numbers,,
+crops/mixed_00779.png,"80,00",train,price,6,0.765,numbers,,
+crops/mixed_00107.png,"12,00",train,price,6,0.842,numbers,,
+crops/mixed_01262.png,11 DT,train,price,2,0.7,synthetic,Sandwiches,val
+crops/mixed_01139.png,SALADS,train,header,2,0.56,synthetic,Salads,train
+crops/mixed_01050.png,Breakfast Burrito,train,name,1,0.87,synthetic,Breakfast,train
+crops/mixed_00100.png,11.500,train,price,5,0.845,numbers,,
+crops/mixed_00035.png,1.000,train,price,6,0.920,numbers,,
+crops/mixed_01257.png,Scone,train,name,11,0.53,synthetic,Pastries,train
+crops/mixed_00002.png,0,train,price,12,0.864,numbers,,
+crops/mixed_00368.png,29,train,price,6,0.951,numbers,,
+crops/mixed_00241.png,18.00,val,price,6,0.515,numbers,,
+crops/mixed_00314.png,20.000,train,price,0,0.749,numbers,,
+crops/mixed_00794.png,83,train,price,11,0.470,numbers,,
+crops/mixed_01040.png,Banana Bread,train,name,6,0.4,synthetic,Pastries,train
+crops/mixed_00214.png,16.000,train,price,12,0.630,numbers,,
+crops/mixed_00346.png,26,train,price,10,0.748,numbers,,
+crops/mixed_00706.png,7.50,train,price,10,0.977,numbers,,
+crops/mixed_01142.png,Cola,train,name,2,0.46,synthetic,Soft Drinks,train
+crops/mixed_00049.png,"10,00",val,price,11,0.470,numbers,,
+crops/mixed_00396.png,3.500,train,price,2,0.976,numbers,,
+crops/mixed_00090.png,11.000,train,price,7,0.922,numbers,,
+crops/mixed_01066.png,Orange Juice,train,name,6,0.57,synthetic,Juices & Smoothies,train
+crops/mixed_01060.png,10.140,train,price,2,0.82,synthetic,Salads,test
+crops/mixed_01280.png,"6,45",train,price,5,0.56,synthetic,Salads,train
+crops/mixed_01112.png,Falafel Wrap,train,name,4,0.66,synthetic,Sandwiches,train
+crops/mixed_01220.png,Mocha,train,name,4,0.6,synthetic,Coffee,train
+crops/mixed_01277.png,5.250,train,price,4,0.64,synthetic,Breakfast,train
+crops/mixed_00044.png,10,train,price,5,0.673,numbers,,
+crops/mixed_00056.png,10.00,train,price,6,0.380,numbers,,
+crops/mixed_00277.png,"2,00",train,price,11,0.561,numbers,,
+crops/mixed_01192.png,"3,01",train,price,1,0.62,synthetic,Pastries,train
+crops/mixed_00235.png,18,train,price,7,0.681,numbers,,
+crops/mixed_00547.png,5.00,train,price,8,0.752,numbers,,
+crops/mixed_00797.png,85,train,price,3,0.660,numbers,,
+crops/mixed_01044.png,10,train,price,1,0.88,synthetic,Soft Drinks,test
+crops/mixed_00371.png,3,train,price,9,0.402,numbers,,
+crops/mixed_00749.png,76,train,price,2,0.972,numbers,,
+crops/mixed_00374.png,"3,00",val,price,0,0.479,numbers,,
+crops/mixed_00143.png,"13,50",train,price,6,0.653,numbers,,
+crops/mixed_00172.png,"14,50",train,price,11,0.723,numbers,,
+crops/mixed_00347.png,26,train,price,0,0.666,numbers,,
+crops/mixed_00945.png,"9,56",val,price,12,0.47,synthetic,Coffee,train
+crops/mixed_00261.png,19.00,train,price,5,0.875,numbers,,
+crops/mixed_01026.png,9.84 DT,test,price,3,0.59,synthetic,Coffee,train
+crops/mixed_00298.png,20,test,price,3,0.447,numbers,,
+crops/mixed_01233.png,5.03,train,price,6,0.4,synthetic,Coffee,train
+crops/mixed_00639.png,61,train,price,12,0.903,numbers,,
+crops/mixed_01248.png,Cheesecake,train,name,8,0.74,synthetic,Desserts,val
+crops/mixed_01273.png,4.51,train,price,5,0.94,synthetic,Tea,train
+crops/mixed_00190.png,"15,00",train,price,8,0.326,numbers,,
+crops/mixed_00774.png,80,test,price,4,0.804,numbers,,
+crops/mixed_00078.png,"11,00",train,price,7,0.974,numbers,,
+crops/mixed_00386.png,3.000,train,price,8,0.749,numbers,,
+crops/mixed_00022.png,"1,00",test,price,10,0.373,numbers,,
+crops/mixed_00021.png,"1,00",test,price,4,0.410,numbers,,
+crops/mixed_01055.png,BLT,train,name,5,0.45,synthetic,Sandwiches,val
+crops/mixed_00604.png,"6,50",train,price,0,0.987,numbers,,
+crops/mixed_00728.png,71,train,price,12,0.705,numbers,,
+crops/mixed_00296.png,2.500,test,price,10,0.713,numbers,,
+crops/mixed_00434.png,35.000,train,price,12,0.758,numbers,,
+crops/mixed_00356.png,"28,00",train,price,0,0.782,numbers,,
+crops/mixed_01205.png,DESSERTS,train,header,0,0.6,synthetic,Desserts,train
+crops/mixed_00855.png,90.000,train,price,6,0.714,numbers,,
+crops/mixed_00724.png,70.000,train,price,7,0.991,numbers,,
+crops/mixed_00786.png,80.000,train,price,11,0.815,numbers,,
+crops/mixed_00745.png,75.000,train,price,4,0.819,numbers,,
+crops/mixed_00993.png,10.70,test,price,10,0.84,synthetic,Breakfast,test
+crops/mixed_00259.png,"19,00",train,price,0,0.537,numbers,,
+crops/mixed_00599.png,"6,00",train,price,3,0.803,numbers,,
+crops/mixed_00526.png,46,train,price,12,0.512,numbers,,
+crops/mixed_00269.png,2,val,price,10,0.524,numbers,,
+crops/mixed_00524.png,46,train,price,3,0.430,numbers,,
+crops/mixed_01259.png,Mint Tea,train,name,1,0.41,synthetic,Tea,train
+crops/mixed_00512.png,"45,00",val,price,0,0.432,numbers,,
+crops/mixed_00820.png,"9,00",train,price,11,0.548,numbers,,
+crops/mixed_00489.png,"40,00",test,price,12,0.645,numbers,,
+crops/mixed_00822.png,"9,50",train,price,5,0.599,numbers,,
+crops/mixed_00916.png,11.020,val,price,12,0.83,synthetic,Tea,val
+crops/mixed_00520.png,45.000,train,price,1,0.830,numbers,,
+crops/mixed_00073.png,11,train,price,6,0.897,numbers,,
+crops/mixed_00568.png,52,train,price,7,0.627,numbers,,
+crops/mixed_00220.png,17,train,price,4,0.799,numbers,,
+crops/mixed_00818.png,"9,00",train,price,9,0.770,numbers,,
+crops/mixed_01247.png,4,train,price,2,0.44,synthetic,Desserts,train
+crops/mixed_01137.png,"10,05",train,price,11,0.75,synthetic,Pastries,train
+crops/mixed_00972.png,8,test,price,10,0.49,synthetic,Salads,train
+crops/mixed_00179.png,14.000,train,price,1,0.584,numbers,,
+crops/mixed_01144.png,4.900,train,price,4,0.48,synthetic,Desserts,test
+crops/mixed_00177.png,14.000,train,price,12,0.958,numbers,,
+crops/mixed_00870.png,93,train,price,9,0.787,numbers,,
+crops/mixed_01227.png,Mocha,train,name,8,0.75,synthetic,Coffee,train
+crops/mixed_00744.png,75.000,train,price,1,0.338,numbers,,
+crops/mixed_00834.png,9.000,train,price,10,0.446,numbers,,
+crops/mixed_00231.png,17.000,train,price,4,0.874,numbers,,
+crops/mixed_01021.png,11.680 dt,test,price,3,0.45,synthetic,Sandwiches,val
+crops/mixed_01070.png,Earl Grey,train,name,5,0.5,synthetic,Tea,val
+crops/mixed_00289.png,2.000,train,price,10,0.911,numbers,,
+crops/mixed_00926.png,Apple Turnover,val,name,12,0.77,synthetic,Pastries,train
+crops/mixed_00937.png,Espresso,val,name,12,0.65,synthetic,Coffee,test
+crops/mixed_00192.png,"15,00",train,price,4,0.455,numbers,,
+crops/mixed_01008.png,Iced Chocolate,test,name,10,0.59,synthetic,Soft Drinks,train
+crops/mixed_00588.png,57,train,price,12,0.605,numbers,,
+crops/mixed_00112.png,"12,50",val,price,7,0.727,numbers,,
+crops/mixed_00730.png,72,train,price,7,0.865,numbers,,
+crops/mixed_00970.png,"5,20",test,price,3,0.53,synthetic,Sandwiches,train
+crops/mixed_01115.png,8,train,price,8,0.68,synthetic,Coffee,test
+crops/mixed_00885.png,96,val,price,6,0.564,numbers,,
+crops/mixed_00032.png,1.000,train,price,9,0.698,numbers,,
+crops/mixed_00914.png,2,val,price,12,0.6,synthetic,Pastries,train
+crops/mixed_00126.png,12.50,train,price,12,0.663,numbers,,
+crops/mixed_00554.png,50,train,price,11,0.774,numbers,,
+crops/mixed_00879.png,"95,00",train,price,9,0.424,numbers,,
+crops/mixed_00485.png,40,train,price,0,0.999,numbers,,
+crops/mixed_00525.png,46,train,price,7,0.784,numbers,,
+crops/mixed_00097.png,11.50,train,price,0,0.443,numbers,,
+crops/mixed_00275.png,"2,00",train,price,12,0.357,numbers,,
+crops/mixed_00121.png,12.000,test,price,8,0.314,numbers,,
+crops/mixed_00938.png,8.84,val,price,12,0.74,synthetic,Tea,train
+crops/mixed_00011.png,0.50,train,price,1,0.985,numbers,,
+crops/mixed_00888.png,97,train,price,11,0.523,numbers,,
+crops/mixed_00632.png,60.00,train,price,5,0.826,numbers,,
+crops/mixed_00459.png,"4,00",train,price,2,0.981,numbers,,
+crops/mixed_01228.png,7.400,train,price,5,0.9,synthetic,Salads,train
+crops/mixed_00473.png,4.000,train,price,3,0.837,numbers,,
+crops/mixed_00494.png,40.00,train,price,1,0.600,numbers,,
+crops/mixed_00428.png,"35,00",train,price,11,0.970,numbers,,
+crops/mixed_00672.png,67,test,price,7,0.366,numbers,,
+crops/mixed_01200.png,BLT,train,name,2,0.54,synthetic,Sandwiches,val
+crops/mixed_00272.png,2,val,price,3,0.549,numbers,,
+crops/mixed_00886.png,96,val,price,10,0.783,numbers,,
+crops/mixed_00690.png,"7,50",train,price,0,0.606,numbers,,
+crops/mixed_00846.png,"90,00",train,price,12,0.466,numbers,,
+crops/mixed_00616.png,6.50,train,price,2,0.722,numbers,,
+crops/mixed_01073.png,COFFEE,train,header,2,0.76,synthetic,Coffee,train
+crops/mixed_00602.png,"6,50",train,price,5,0.840,numbers,,
+crops/mixed_00761.png,"8,00",train,price,3,0.767,numbers,,
+crops/mixed_00913.png,10,val,price,12,0.84,synthetic,Breakfast,train
+crops/mixed_01122.png,DESSERTS,train,header,6,0.52,synthetic,Desserts,train
+crops/mixed_00125.png,12.000,test,price,4,0.387,numbers,,
+crops/mixed_01087.png,Lemonade,train,name,0,0.47,synthetic,Soft Drinks,val
+crops/mixed_00148.png,13.00,train,price,2,0.875,numbers,,
+crops/mixed_00790.png,81,train,price,4,0.398,numbers,,
+crops/mixed_00529.png,47,train,price,0,0.534,numbers,,
+crops/mixed_00941.png,Cheese Danish,val,name,12,0.45,synthetic,Pastries,train
+crops/mixed_00342.png,"25,00",val,price,5,0.429,numbers,,
+crops/mixed_00668.png,66,val,price,5,0.826,numbers,,
+crops/mixed_01146.png,Almond Tart,train,name,5,0.83,synthetic,Pastries,train
+crops/mixed_00068.png,10.500,train,price,11,0.401,numbers,,
+crops/mixed_00784.png,80.00,train,price,10,0.492,numbers,,
+crops/mixed_00796.png,85,train,price,11,0.744,numbers,,
+crops/mixed_00515.png,45.00,test,price,5,0.408,numbers,,
+crops/mixed_01174.png,Tuna Melt,train,name,5,0.77,synthetic,Sandwiches,train
+crops/mixed_00202.png,16,train,price,3,0.833,numbers,,
+crops/mixed_00843.png,90,train,price,9,0.768,numbers,,
+crops/mixed_01037.png,Creme Brulee,train,name,0,0.53,synthetic,Desserts,train
+crops/mixed_00017.png,1,train,price,4,0.596,numbers,,
+crops/mixed_00034.png,1.000,train,price,1,0.873,numbers,,
+crops/mixed_01064.png,2.90 DT,train,price,8,0.83,synthetic,Desserts,train
+crops/mixed_00237.png,"18,00",train,price,8,0.516,numbers,,
+crops/mixed_00153.png,13.000,train,price,5,0.968,numbers,,
+crops/mixed_00048.png,"10,00",val,price,3,0.804,numbers,,
+crops/mixed_00700.png,7.000,train,price,5,0.736,numbers,,
+crops/mixed_00657.png,"65,00",train,price,12,0.759,numbers,,
+crops/mixed_01074.png,8,train,price,5,0.72,synthetic,Desserts,train
+crops/mixed_00751.png,78,test,price,6,0.928,numbers,,
+crops/mixed_00808.png,87,train,price,11,0.844,numbers,,
+crops/mixed_01056.png,COFFEE,train,header,6,0.85,synthetic,Coffee,train
+crops/mixed_00562.png,50.00,train,price,3,0.748,numbers,,
+crops/mixed_01079.png,Pancakes,train,name,11,0.94,synthetic,Breakfast,train
+crops/mixed_00383.png,3.00,train,price,11,0.755,numbers,,
+crops/mixed_00069.png,10.500,train,price,10,0.902,numbers,,
+crops/mixed_00583.png,55.000,train,price,0,0.731,numbers,,
+crops/mixed_00623.png,60,train,price,11,0.917,numbers,,
+crops/mixed_00861.png,91,train,price,6,0.767,numbers,,
+crops/mixed_00942.png,"4,39",val,price,12,0.49,synthetic,Breakfast,train
+crops/mixed_00238.png,"18,00",train,price,12,0.391,numbers,,
+crops/mixed_01157.png,3.090,train,price,8,0.47,synthetic,Sandwiches,train
+crops/mixed_00823.png,"9,50",train,price,3,0.496,numbers,,
+crops/mixed_00848.png,"90,00",train,price,5,0.865,numbers,,
+crops/mixed_00280.png,"2,50",train,price,4,0.736,numbers,,
+crops/mixed_00871.png,93,train,price,5,0.578,numbers,,
+crops/mixed_00492.png,40.00,train,price,9,0.629,numbers,,
+crops/mixed_00522.png,45.000,train,price,3,0.666,numbers,,
+crops/mixed_00528.png,47,train,price,2,0.817,numbers,,
+crops/mixed_00847.png,"90,00",train,price,7,0.995,numbers,,
+crops/mixed_01198.png,7.680 dt,train,price,2,0.71,synthetic,Breakfast,test
+crops/mixed_00057.png,10.00,train,price,7,0.387,numbers,,
+crops/mixed_00831.png,9.000,train,price,10,0.531,numbers,,
+crops/mixed_00868.png,92,train,price,1,0.534,numbers,,
+crops/mixed_00463.png,"4,50",train,price,5,0.365,numbers,,
+crops/mixed_00978.png,"11,13",test,price,10,0.68,synthetic,Pastries,train
+crops/mixed_00952.png,Orange Juice,val,name,7,0.91,synthetic,Juices & Smoothies,train
+crops/mixed_01163.png,7.050,train,price,8,0.91,synthetic,Coffee,train
+crops/mixed_00376.png,"3,00",val,price,5,0.639,numbers,,
+crops/mixed_01111.png,French Toast,train,name,6,0.64,synthetic,Breakfast,test
+crops/mixed_00062.png,10.000,val,price,7,0.589,numbers,,
+crops/mixed_00903.png,99.00,val,price,2,0.378,numbers,,
+crops/mixed_00325.png,"22,00",val,price,1,0.793,numbers,,
+crops/mixed_00410.png,30.000,train,price,6,0.338,numbers,,
+crops/mixed_00067.png,10.50,train,price,7,0.975,numbers,,
+crops/mixed_00971.png,10,test,price,3,0.7,synthetic,Breakfast,train
+crops/mixed_01076.png,Caesar Salad,train,name,11,0.83,synthetic,Salads,train
+crops/mixed_00653.png,64,train,price,11,0.359,numbers,,
+crops/mixed_00401.png,"30,00",train,price,12,0.941,numbers,,
+crops/mixed_00702.png,7.000,train,price,12,0.430,numbers,,
+crops/mixed_00185.png,14.500,test,price,11,0.738,numbers,,
+crops/mixed_01003.png,Pancakes,test,name,3,0.85,synthetic,Breakfast,train
+crops/mixed_01187.png,Cinnamon Roll,train,name,1,0.69,synthetic,Pastries,train
+crops/mixed_00413.png,30.000,train,price,6,0.428,numbers,,
+crops/mixed_00651.png,64,train,price,1,0.807,numbers,,
+crops/mixed_01150.png,Turkish Coffee,train,name,2,0.44,synthetic,Coffee,train
+crops/mixed_00762.png,"8,00",train,price,8,0.859,numbers,,
+crops/mixed_00263.png,19.00,train,price,5,0.414,numbers,,
+crops/mixed_00508.png,45,train,price,0,0.478,numbers,,
+crops/mixed_00059.png,10.00,train,price,9,0.328,numbers,,
+crops/mixed_00997.png,5.250,test,price,3,0.5,synthetic,Breakfast,train
+crops/mixed_00658.png,"65,00",train,price,2,0.363,numbers,,
+crops/mixed_00474.png,4.50,train,price,5,0.945,numbers,,
+crops/mixed_00807.png,86,val,price,9,0.475,numbers,,
+crops/mixed_00825.png,"9,50",train,price,1,0.607,numbers,,
+crops/mixed_00018.png,1,train,price,0,0.824,numbers,,
+crops/mixed_01088.png,SALADS,train,header,2,0.42,synthetic,Salads,train
+crops/mixed_00419.png,32,train,price,5,0.931,numbers,,
+crops/mixed_00608.png,6.00,test,price,0,0.367,numbers,,
+crops/mixed_01214.png,4.900,train,price,8,0.78,synthetic,Desserts,test
+crops/mixed_00210.png,16.00,train,price,3,0.361,numbers,,
+crops/mixed_00168.png,"14,00",train,price,9,0.836,numbers,,
+crops/mixed_00666.png,65.000,train,price,3,0.498,numbers,,
+crops/mixed_00595.png,6,train,price,10,0.611,numbers,,
+crops/mixed_01033.png,Creme Brulee,train,name,2,0.5,synthetic,Desserts,train
+crops/mixed_00170.png,"14,00",train,price,9,0.916,numbers,,
+crops/mixed_00462.png,"4,50",train,price,5,0.782,numbers,,
+crops/mixed_00768.png,8.00,train,price,11,0.579,numbers,,
+crops/mixed_00785.png,80.00,train,price,9,0.743,numbers,,
+crops/mixed_00400.png,"30,00",train,price,12,0.870,numbers,,
+crops/mixed_01180.png,7.960,train,price,8,0.43,synthetic,Salads,test
+crops/mixed_00580.png,55.00,test,price,6,0.511,numbers,,
+crops/mixed_00299.png,20,test,price,11,0.381,numbers,,
+crops/mixed_00092.png,11.000,train,price,5,0.769,numbers,,
+crops/mixed_01244.png,7.830,train,price,5,0.84,synthetic,Coffee,train
+crops/mixed_00811.png,88,test,price,6,0.634,numbers,,
+crops/mixed_00697.png,7.00,train,price,3,0.321,numbers,,
+crops/mixed_00893.png,98,train,price,11,0.315,numbers,,
+crops/mixed_00089.png,11.00,val,price,7,0.654,numbers,,
+crops/mixed_01123.png,8,train,price,1,0.41,synthetic,Pastries,test
+crops/mixed_00513.png,"45,00",val,price,0,0.609,numbers,,
+crops/mixed_00959.png,10.950 DT,val,price,12,0.87,synthetic,Soft Drinks,val
+crops/mixed_01254.png,Still Water,train,name,1,0.66,synthetic,Soft Drinks,test
+crops/mixed_00300.png,20,test,price,2,0.888,numbers,,
+crops/mixed_00294.png,2.500,test,price,2,0.645,numbers,,
+crops/mixed_00575.png,"55,00",train,price,3,0.654,numbers,,
+crops/mixed_00046.png,10,train,price,5,0.896,numbers,,
+crops/mixed_01271.png,Croissant,train,name,8,0.92,synthetic,Pastries,train
+crops/mixed_00479.png,4.500,train,price,1,0.511,numbers,,
+crops/mixed_00974.png,Grilled Cheese,test,name,10,0.94,synthetic,Sandwiches,train
+crops/mixed_00921.png,10.140,val,price,7,0.84,synthetic,Salads,test
+crops/mixed_00221.png,"17,00",train,price,9,0.772,numbers,,
+crops/mixed_00587.png,57,train,price,2,0.941,numbers,,
+crops/mixed_00965.png,Chocolate Brownie,val,name,7,0.8,synthetic,Pastries,train
+crops/mixed_01264.png,10,train,price,4,0.79,synthetic,Coffee,test
+crops/mixed_00605.png,6.00,test,price,12,0.574,numbers,,
+crops/mixed_00252.png,19,train,price,1,0.768,numbers,,
+crops/mixed_01131.png,Blueberry Muffin,train,name,1,0.46,synthetic,Pastries,test
+crops/mixed_00256.png,"19,00",train,price,12,0.594,numbers,,
+crops/mixed_01030.png,Earl Grey,train,name,0,0.49,synthetic,Tea,val
+crops/mixed_01238.png,7.76,train,price,2,0.6,synthetic,Desserts,val
+crops/mixed_00716.png,"70,00",train,price,1,0.337,numbers,,
+crops/mixed_00239.png,"18,00",train,price,8,0.902,numbers,,
+crops/mixed_00681.png,69,train,price,0,0.693,numbers,,
+crops/mixed_00633.png,60.000,test,price,2,0.409,numbers,,
+crops/mixed_01284.png,Mango Smoothie,train,name,4,0.76,synthetic,Juices & Smoothies,train
+crops/mixed_00684.png,7,train,price,12,0.416,numbers,,
+crops/mixed_00367.png,29,train,price,9,0.580,numbers,,
+crops/mixed_00157.png,13.50,train,price,2,0.956,numbers,,
+crops/mixed_00084.png,"11,50",train,price,12,0.403,numbers,,
+crops/mixed_00387.png,3.000,train,price,11,0.327,numbers,,
+crops/mixed_00439.png,36,train,price,6,0.785,numbers,,
+crops/mixed_00072.png,11,train,price,4,0.774,numbers,,
+crops/mixed_00699.png,7.000,train,price,6,0.372,numbers,,
+crops/mixed_01126.png,Espresso,train,name,1,0.63,synthetic,Coffee,test
+crops/mixed_00331.png,22.000,train,price,8,0.827,numbers,,
+crops/mixed_00640.png,61,train,price,9,0.569,numbers,,
+crops/mixed_00755.png,8,train,price,0,0.417,numbers,,
+crops/mixed_00875.png,94,val,price,7,0.488,numbers,,
+crops/mixed_00917.png,"9,56",val,price,12,0.44,synthetic,Coffee,train
+crops/mixed_00101.png,11.500,train,price,3,0.372,numbers,,
+crops/mixed_00557.png,"50,00",train,price,12,0.367,numbers,,
+crops/mixed_00662.png,65.00,train,price,8,0.980,numbers,,
+crops/mixed_00382.png,3.00,train,price,9,0.697,numbers,,
+crops/mixed_00613.png,6.000,train,price,2,0.903,numbers,,
+crops/mixed_01042.png,10,train,price,2,0.85,synthetic,Coffee,test
+crops/mixed_01134.png,9,train,price,8,0.73,synthetic,Breakfast,train
+crops/mixed_01068.png,Iced Tea,train,name,2,0.56,synthetic,Tea,train
+crops/mixed_00482.png,4.500,train,price,5,0.987,numbers,,
+crops/mixed_00483.png,40,train,price,12,0.553,numbers,,
+crops/mixed_01294.png,"9,56",train,price,9,0.4,synthetic,Coffee,train
+crops/mixed_00361.png,28.00,train,price,1,0.961,numbers,,
+crops/mixed_00147.png,13.00,train,price,9,0.632,numbers,,
+crops/mixed_00624.png,60,train,price,11,0.468,numbers,,
+crops/mixed_00016.png,1,train,price,6,0.640,numbers,,
+crops/mixed_01281.png,SOFT DRINKS,train,header,9,0.88,synthetic,Soft Drinks,train
+crops/mixed_01152.png,10.42,train,price,5,0.65,synthetic,Juices & Smoothies,train
+crops/mixed_00304.png,"20,00",train,price,7,0.424,numbers,,
+crops/mixed_00352.png,27,train,price,5,0.356,numbers,,
+crops/mixed_00395.png,3.500,train,price,5,0.944,numbers,,
+crops/mixed_01015.png,2.90 DT,test,price,10,0.85,synthetic,Desserts,train
+crops/mixed_00804.png,85.000,train,price,8,0.586,numbers,,
+crops/mixed_00581.png,55.000,train,price,10,0.787,numbers,,
+crops/mixed_00038.png,1.50,test,price,7,0.304,numbers,,
+crops/mixed_00655.png,65,val,price,7,0.419,numbers,,
+crops/mixed_01019.png,"11,23",test,price,3,0.47,synthetic,Juices & Smoothies,val
+crops/mixed_00122.png,12.000,test,price,12,0.707,numbers,,
+crops/mixed_00080.png,"11,00",train,price,1,0.772,numbers,,
+crops/mixed_00591.png,59,train,price,10,0.939,numbers,,
+crops/mixed_00835.png,9.50,train,price,6,0.318,numbers,,
+crops/mixed_00988.png,Falafel Wrap,test,name,10,0.51,synthetic,Sandwiches,train
+crops/mixed_00992.png,Banana Bread,test,name,3,0.56,synthetic,Pastries,train
+crops/mixed_00320.png,22,test,price,4,0.888,numbers,,
+crops/mixed_00962.png,8,val,price,7,0.6,synthetic,Pastries,test
+crops/mixed_00050.png,"10,00",val,price,11,0.713,numbers,,
+crops/mixed_00949.png,"5,99",val,price,12,0.49,synthetic,Breakfast,train
+crops/mixed_00850.png,"90,00",train,price,7,0.605,numbers,,
+crops/mixed_01065.png,Makroudh,train,name,11,0.77,synthetic,Pastries,train
+crops/mixed_01071.png,Chicken Salad,train,name,6,0.67,synthetic,Salads,train
+crops/mixed_00980.png,7.90,test,price,10,0.68,synthetic,Soft Drinks,train
+crops/mixed_00480.png,4.500,train,price,9,0.348,numbers,,
+crops/mixed_01006.png,Lemon Tart,test,name,3,0.95,synthetic,Desserts,train
+crops/mixed_01193.png,SANDWICHES,train,header,0,0.73,synthetic,Sandwiches,train
+crops/mixed_00909.png,99.000,val,price,8,0.927,numbers,,
+crops/mixed_00226.png,17.00,train,price,5,0.301,numbers,,
+crops/mixed_01013.png,Apple Turnover,test,name,10,0.68,synthetic,Pastries,train
+crops/mixed_00809.png,87,train,price,5,0.580,numbers,,
+crops/mixed_00827.png,9.00,train,price,4,0.723,numbers,,
+crops/mixed_00397.png,3.500,train,price,9,0.811,numbers,,
+crops/mixed_00115.png,"12,50",val,price,7,0.934,numbers,,
+crops/mixed_00783.png,80.00,train,price,7,0.553,numbers,,
+crops/mixed_00458.png,"4,00",train,price,7,0.560,numbers,,
+crops/mixed_00310.png,20.00,train,price,8,0.862,numbers,,
+crops/mixed_00213.png,16.000,train,price,8,0.922,numbers,,
+crops/mixed_01023.png,Panna Cotta,test,name,3,0.84,synthetic,Desserts,val
+crops/mixed_01171.png,Chicken Salad,train,name,8,0.61,synthetic,Salads,train
+crops/mixed_00060.png,10.000,val,price,1,0.629,numbers,,
+crops/mixed_00787.png,80.000,train,price,8,0.310,numbers,,
+crops/mixed_01114.png,"7,08",train,price,6,0.91,synthetic,Sandwiches,train
+crops/mixed_00155.png,13.000,train,price,10,0.463,numbers,,
+crops/mixed_00950.png,Macchiato,val,name,12,0.46,synthetic,Coffee,train
+crops/mixed_00076.png,11,train,price,4,0.852,numbers,,
+crops/mixed_00953.png,11.100,val,price,12,0.91,synthetic,Tea,test
+crops/mixed_00442.png,37,train,price,10,0.891,numbers,,
+crops/mixed_01223.png,7.510,train,price,0,0.9,synthetic,Sandwiches,train
+crops/mixed_01035.png,3.91,train,price,1,0.6,synthetic,Breakfast,train
+crops/mixed_00295.png,2.500,test,price,7,0.877,numbers,,
+crops/mixed_00037.png,1.50,test,price,11,0.903,numbers,,
+crops/mixed_00709.png,7.500,train,price,5,0.691,numbers,,
+crops/mixed_00205.png,"16,00",test,price,1,0.738,numbers,,
+crops/mixed_00033.png,1.000,train,price,10,0.450,numbers,,
+crops/mixed_00420.png,32,train,price,2,0.502,numbers,,
+crops/mixed_00058.png,10.00,train,price,9,0.475,numbers,,
+crops/mixed_00585.png,56,train,price,12,0.781,numbers,,
+crops/mixed_01049.png,10.77,train,price,0,0.48,synthetic,Juices & Smoothies,train
+crops/mixed_00571.png,54,train,price,5,0.698,numbers,,
+crops/mixed_01004.png,Almond Tart,test,name,10,0.87,synthetic,Pastries,train
+crops/mixed_00174.png,14.00,train,price,11,0.402,numbers,,
+crops/mixed_00883.png,95.000,train,price,7,0.445,numbers,,
+crops/mixed_01027.png,Ristretto,train,name,2,0.45,synthetic,Coffee,train
+crops/mixed_00719.png,"70,00",train,price,2,0.431,numbers,,
+crops/mixed_01127.png,Cold Brew,train,name,9,0.94,synthetic,Coffee,train
+crops/mixed_00964.png,Macchiato,val,name,12,0.47,synthetic,Coffee,train
+crops/mixed_00643.png,62,train,price,10,0.802,numbers,,
+crops/mixed_00934.png,Lentil Salad,val,name,7,0.5,synthetic,Salads,train
+crops/mixed_00742.png,75.000,train,price,7,0.760,numbers,,
+crops/mixed_00385.png,3.000,train,price,7,0.921,numbers,,
+crops/mixed_01270.png,Chicken Salad,train,name,8,0.82,synthetic,Salads,train
+crops/mixed_00637.png,61,train,price,5,0.496,numbers,,
+crops/mixed_00986.png,8.84,test,price,3,0.6,synthetic,Tea,train
+crops/mixed_00149.png,13.00,train,price,8,0.842,numbers,,
+crops/mixed_00491.png,"40,00",test,price,11,0.415,numbers,,
+crops/mixed_01047.png,Chicken Salad,train,name,5,0.59,synthetic,Salads,train
+crops/mixed_01175.png,9 TND,train,price,1,0.78,synthetic,Tea,test
+crops/mixed_01031.png,Watermelon Juice,train,name,5,0.83,synthetic,Juices & Smoothies,train
+crops/mixed_01106.png,5,train,price,6,0.74,synthetic,Soft Drinks,test
+crops/mixed_00863.png,91,train,price,9,0.375,numbers,,
+crops/mixed_00887.png,96,val,price,10,0.801,numbers,,
+crops/mixed_00007.png,"0,50",train,price,7,0.364,numbers,,
+crops/mixed_01218.png,12,train,price,1,0.72,synthetic,Soft Drinks,train
+crops/mixed_00091.png,11.000,train,price,1,0.364,numbers,,
+crops/mixed_00184.png,14.50,test,price,5,0.724,numbers,,
+crops/mixed_01282.png,9.20,train,price,6,0.4,synthetic,Pastries,train
+crops/mixed_00714.png,70,train,price,6,0.448,numbers,,
+crops/mixed_00099.png,11.500,train,price,11,0.944,numbers,,
+crops/mixed_00426.png,34,train,price,9,0.814,numbers,,
+crops/mixed_01159.png,Mocha,train,name,0,0.65,synthetic,Coffee,train
+crops/mixed_00144.png,"13,50",train,price,5,0.828,numbers,,
+crops/mixed_00677.png,68,train,price,10,0.449,numbers,,
+crops/mixed_00922.png,"6,05",val,price,7,0.86,synthetic,Coffee,train
+crops/mixed_00645.png,62,train,price,2,0.606,numbers,,
+crops/mixed_00301.png,"20,00",train,price,3,0.820,numbers,,
+crops/mixed_01212.png,Pain au Chocolat,train,name,2,0.48,synthetic,Pastries,train
+crops/mixed_00665.png,65.000,train,price,6,0.415,numbers,,
+crops/mixed_01177.png,Banana Bread,train,name,4,0.87,synthetic,Pastries,train
+crops/mixed_00905.png,99.00,val,price,0,0.643,numbers,,
+crops/mixed_01061.png,Jasmine Tea,train,name,9,0.75,synthetic,Tea,test
+crops/mixed_00531.png,47,train,price,0,0.595,numbers,,
+crops/mixed_00933.png,4.600,val,price,12,0.74,synthetic,Pastries,train
+crops/mixed_00510.png,"45,00",val,price,7,0.910,numbers,,
+crops/mixed_00390.png,3.50,train,price,7,0.363,numbers,,
+crops/mixed_01197.png,COFFEE,train,header,6,0.51,synthetic,Coffee,train
+crops/mixed_01032.png,Tuna Melt,train,name,9,0.64,synthetic,Sandwiches,train
+crops/mixed_00654.png,65,val,price,10,0.681,numbers,,
+crops/mixed_00979.png,Avocado Toast,test,name,3,0.8,synthetic,Breakfast,train
+crops/mixed_00098.png,11.500,train,price,9,0.600,numbers,,
+crops/mixed_00369.png,29,train,price,4,0.667,numbers,,
+crops/mixed_01286.png,Espresso,train,name,4,0.48,synthetic,Coffee,test
+crops/mixed_00812.png,9,train,price,12,0.744,numbers,,
+crops/mixed_00128.png,12.50,train,price,5,0.560,numbers,,
+crops/mixed_00678.png,68,train,price,0,0.448,numbers,,
+crops/mixed_00614.png,6.50,train,price,8,0.480,numbers,,
+crops/mixed_00232.png,17.000,train,price,1,0.315,numbers,,
+crops/mixed_00977.png,Club Sandwich,test,name,3,0.93,synthetic,Sandwiches,val
+crops/mixed_00544.png,"5,50",train,price,12,0.713,numbers,,
+crops/mixed_00726.png,70.000,train,price,5,0.762,numbers,,
+crops/mixed_00844.png,90,train,price,5,0.797,numbers,,
+crops/mixed_00381.png,3.00,train,price,6,0.512,numbers,,
+crops/mixed_00748.png,76,train,price,6,0.967,numbers,,
+crops/mixed_00176.png,14.00,train,price,12,0.304,numbers,,
+crops/mixed_01082.png,9.84 DT,train,price,1,0.52,synthetic,Coffee,train
+crops/mixed_00772.png,8.500,train,price,1,0.598,numbers,,
+crops/mixed_00880.png,95.00,train,price,12,0.958,numbers,,
+crops/mixed_00188.png,15,train,price,7,0.858,numbers,,
+crops/mixed_00297.png,20,test,price,6,0.722,numbers,,
+crops/mixed_01269.png,Cold Brew,train,name,4,0.73,synthetic,Coffee,train
+crops/mixed_00622.png,60,train,price,11,0.844,numbers,,
+crops/mixed_00701.png,7.000,train,price,4,0.711,numbers,,
+crops/mixed_00354.png,28,train,price,5,0.840,numbers,,
+crops/mixed_00207.png,16.00,train,price,8,0.776,numbers,,
+crops/mixed_00113.png,"12,50",val,price,5,0.775,numbers,,
+crops/mixed_00731.png,72,train,price,11,0.977,numbers,,
+crops/mixed_00729.png,72,train,price,12,0.470,numbers,,
+crops/mixed_00969.png,4.51,test,price,3,0.44,synthetic,Tea,train
+crops/mixed_01009.png,Chicken Salad,test,name,3,0.44,synthetic,Salads,train
+crops/mixed_00757.png,8,train,price,6,0.742,numbers,,
+crops/mixed_00536.png,49,val,price,4,0.654,numbers,,
+crops/mixed_00364.png,28.000,train,price,6,0.835,numbers,,
+crops/mixed_00537.png,49,val,price,12,0.460,numbers,,
+crops/mixed_00243.png,18.00,val,price,5,0.988,numbers,,
+crops/mixed_00878.png,"95,00",train,price,6,0.787,numbers,,
+crops/mixed_00246.png,18.000,test,price,0,0.523,numbers,,
+crops/mixed_01204.png,Lemonade,train,name,5,0.94,synthetic,Soft Drinks,val
+crops/mixed_00884.png,96,val,price,2,0.991,numbers,,
+crops/mixed_01119.png,2.01,train,price,1,0.58,synthetic,Breakfast,train
+crops/mixed_00087.png,11.00,val,price,4,0.621,numbers,,
+crops/mixed_00195.png,15.000,train,price,4,0.382,numbers,,
+crops/mixed_00010.png,0.50,train,price,0,0.378,numbers,,
+crops/mixed_00282.png,2.00,train,price,11,0.953,numbers,,
+crops/mixed_00286.png,2.000,train,price,6,0.783,numbers,,
+crops/mixed_00348.png,26,train,price,0,0.836,numbers,,
+crops/mixed_00264.png,19.000,train,price,3,0.753,numbers,,
+crops/mixed_00363.png,28.000,train,price,12,0.426,numbers,,
+crops/mixed_01160.png,"11,23",train,price,1,0.84,synthetic,Juices & Smoothies,val
+crops/mixed_00739.png,"75,00",train,price,5,0.987,numbers,,
+crops/mixed_00612.png,6.000,train,price,12,0.869,numbers,,
+crops/mixed_00332.png,22.000,train,price,8,0.594,numbers,,
+crops/mixed_00717.png,"70,00",train,price,6,0.371,numbers,,
+crops/mixed_01145.png,Turkey Sandwich,train,name,6,0.6,synthetic,Sandwiches,train
+crops/mixed_00750.png,78,test,price,10,0.891,numbers,,
+crops/mixed_00603.png,"6,50",train,price,2,0.871,numbers,,
+crops/mixed_00891.png,98,train,price,12,0.697,numbers,,
+crops/mixed_00715.png,"70,00",train,price,4,0.433,numbers,,
+crops/mixed_00461.png,"4,50",train,price,8,0.532,numbers,,
+crops/mixed_00837.png,9.50,train,price,11,0.997,numbers,,
+crops/mixed_01255.png,"5,99",train,price,9,0.77,synthetic,Breakfast,train
+crops/mixed_00251.png,19,train,price,5,0.431,numbers,,
+crops/mixed_01154.png,Fruit Salad,train,name,0,0.54,synthetic,Breakfast,train
+crops/mixed_00274.png,"2,00",train,price,0,0.910,numbers,,
+crops/mixed_00631.png,60.00,train,price,2,0.398,numbers,,
+crops/mixed_00579.png,55.00,test,price,0,0.581,numbers,,
+crops/mixed_00495.png,40.00,train,price,4,0.380,numbers,,
+crops/mixed_00276.png,"2,00",train,price,7,0.850,numbers,,
+crops/mixed_00534.png,49,val,price,7,0.859,numbers,,
+crops/mixed_00910.png,99.000,val,price,12,0.361,numbers,,
+crops/mixed_01190.png,SALADS,train,header,1,0.53,synthetic,Salads,train
+crops/mixed_00586.png,56,train,price,12,0.409,numbers,,
+crops/mixed_00470.png,4.000,train,price,0,0.384,numbers,,
+crops/mixed_00370.png,3,train,price,12,0.717,numbers,,
+crops/mixed_00443.png,37,train,price,9,0.864,numbers,,
+crops/mixed_00108.png,"12,00",train,price,5,0.357,numbers,,
+crops/mixed_01225.png,"7,88",train,price,0,0.86,synthetic,Salads,train
+crops/mixed_00650.png,64,train,price,5,0.404,numbers,,
+crops/mixed_00012.png,0.500,test,price,1,0.537,numbers,,
+crops/mixed_00349.png,27,train,price,11,0.816,numbers,,
+crops/mixed_00990.png,10.950 DT,test,price,10,0.93,synthetic,Soft Drinks,val
+crops/mixed_01241.png,Creme Brulee,train,name,5,0.62,synthetic,Desserts,train
+crops/mixed_00379.png,"3,50",train,price,4,0.937,numbers,,
+crops/mixed_00615.png,6.50,train,price,3,0.510,numbers,,
+crops/mixed_00545.png,5.00,train,price,0,0.592,numbers,,
+crops/mixed_00355.png,"28,00",train,price,11,0.675,numbers,,
+crops/mixed_00960.png,6.48,val,price,7,0.58,synthetic,Sandwiches,train
+crops/mixed_00123.png,12.000,test,price,10,0.428,numbers,,
+crops/mixed_01155.png,Tuna Melt,train,name,4,0.54,synthetic,Sandwiches,train
+crops/mixed_00104.png,12,train,price,5,0.882,numbers,,
+crops/mixed_00248.png,18.000,test,price,3,0.982,numbers,,
+crops/mixed_00912.png,4.59,val,price,12,0.62,synthetic,Coffee,train
+crops/mixed_00732.png,73,train,price,7,0.592,numbers,,
+crops/mixed_00406.png,30.00,train,price,1,0.303,numbers,,
+crops/mixed_00384.png,3.00,train,price,6,0.456,numbers,,
+crops/mixed_00319.png,22,test,price,11,0.709,numbers,,
+crops/mixed_00026.png,"1,50",train,price,4,0.411,numbers,,
+crops/mixed_01276.png,Almond Tart,train,name,0,0.52,synthetic,Pastries,train
+crops/mixed_01266.png,Ice Cream Scoop,train,name,0,0.77,synthetic,Desserts,train
+crops/mixed_01024.png,Chocolate Cake,test,name,10,0.42,synthetic,Desserts,test
+crops/mixed_01001.png,Almond Tart,test,name,3,0.43,synthetic,Pastries,train
+crops/mixed_00171.png,"14,50",train,price,12,0.624,numbers,,
+crops/mixed_00377.png,"3,50",train,price,12,0.343,numbers,,
+crops/mixed_01135.png,Tuna Salad,train,name,2,0.44,synthetic,Salads,train
+crops/mixed_00753.png,79,val,price,11,0.970,numbers,,
+crops/mixed_01249.png,8,train,price,5,0.45,synthetic,Salads,train
+crops/mixed_00618.png,6.500,train,price,1,0.489,numbers,,
+crops/mixed_01158.png,Lemonade,train,name,4,0.82,synthetic,Soft Drinks,val
+crops/mixed_01234.png,"11,23",train,price,5,0.93,synthetic,Juices & Smoothies,val
+crops/mixed_00129.png,12.500,train,price,7,0.662,numbers,,
+crops/mixed_01105.png,Iced Tea,train,name,4,0.8,synthetic,Tea,train
+crops/mixed_00661.png,"65,00",train,price,8,0.632,numbers,,
+crops/mixed_00647.png,63,train,price,8,0.467,numbers,,
+crops/mixed_00906.png,99.000,val,price,10,0.356,numbers,,
+crops/mixed_00782.png,80.00,train,price,11,0.597,numbers,,
+crops/mixed_00031.png,1.00,train,price,8,0.516,numbers,,
+crops/mixed_00041.png,1.500,train,price,2,0.631,numbers,,
+crops/mixed_00984.png,7,test,price,3,0.5,synthetic,Desserts,train
+crops/mixed_01147.png,Turkey Sandwich,train,name,1,0.88,synthetic,Sandwiches,train
+crops/mixed_00851.png,90.00,train,price,2,0.888,numbers,,
+crops/mixed_00053.png,"10,50",train,price,12,0.666,numbers,,
+crops/mixed_01221.png,"6,05",train,price,5,0.46,synthetic,Coffee,train
+crops/mixed_00019.png,"1,00",test,price,5,0.954,numbers,,
+crops/mixed_00856.png,90.000,train,price,3,0.610,numbers,,
+crops/mixed_00083.png,"11,50",train,price,0,0.851,numbers,,
+crops/mixed_00258.png,"19,00",train,price,2,0.733,numbers,,
+crops/mixed_00431.png,35.00,val,price,0,0.765,numbers,,
+crops/mixed_00284.png,2.00,train,price,4,0.552,numbers,,
+crops/mixed_01081.png,"11,13",train,price,4,0.86,synthetic,Pastries,train
+crops/mixed_00345.png,25.000,train,price,1,0.484,numbers,,
+crops/mixed_00780.png,"80,00",train,price,5,0.671,numbers,,
+crops/mixed_00465.png,4.00,train,price,3,0.809,numbers,,
+crops/mixed_00216.png,17,train,price,1,0.658,numbers,,
+crops/mixed_00335.png,23,train,price,4,0.898,numbers,,
+crops/mixed_00771.png,8.50,val,price,4,0.492,numbers,,
+crops/mixed_00266.png,19.000,train,price,7,0.476,numbers,,
+crops/mixed_00712.png,70,train,price,3,0.846,numbers,,
+crops/mixed_01188.png,11.020,train,price,9,0.85,synthetic,Tea,val
+crops/mixed_00472.png,4.000,train,price,5,0.414,numbers,,
+crops/mixed_01107.png,Avocado Toast,train,name,4,0.43,synthetic,Breakfast,train
+crops/mixed_01173.png,11.100,train,price,1,0.47,synthetic,Tea,test
+crops/mixed_00085.png,11.00,val,price,2,0.310,numbers,,
+crops/mixed_00756.png,8,train,price,11,0.505,numbers,,
+crops/mixed_00577.png,"55,00",train,price,2,0.354,numbers,,
+crops/mixed_00606.png,6.00,test,price,11,0.513,numbers,,
+crops/mixed_00403.png,"30,00",train,price,3,0.560,numbers,,
+crops/mixed_00027.png,1.00,train,price,0,0.762,numbers,,
+crops/mixed_01172.png,"7,08",train,price,1,0.5,synthetic,Sandwiches,train
+crops/mixed_01251.png,10.65,train,price,0,0.66,synthetic,Pastries,train
+crops/mixed_00478.png,4.50,train,price,0,0.842,numbers,,
+crops/mixed_00169.png,"14,00",train,price,3,0.818,numbers,,
+crops/mixed_00414.png,31,val,price,12,0.511,numbers,,
+crops/mixed_00344.png,25.000,train,price,11,0.711,numbers,,
+crops/mixed_00932.png,Greek Salad,val,name,12,0.62,synthetic,Salads,test
+crops/mixed_00029.png,1.00,train,price,6,0.724,numbers,,
+crops/mixed_01096.png,11.020,train,price,6,0.8,synthetic,Tea,val
+crops/mixed_01124.png,Panna Cotta,train,name,1,0.93,synthetic,Desserts,val
+crops/mixed_00279.png,"2,50",train,price,5,0.604,numbers,,
+crops/mixed_00708.png,7.500,train,price,8,0.468,numbers,,
+crops/mixed_00499.png,41,train,price,6,0.467,numbers,,
+crops/mixed_00225.png,"17,00",train,price,11,0.930,numbers,,
+crops/mixed_00617.png,6.50,train,price,7,0.358,numbers,,
+crops/mixed_00559.png,50.00,train,price,9,0.388,numbers,,
+crops/mixed_00802.png,85.00,test,price,1,0.445,numbers,,
+crops/mixed_01230.png,Herbal Infusion,train,name,8,0.8,synthetic,Tea,train
+crops/mixed_00399.png,30,train,price,11,0.503,numbers,,
+crops/mixed_00305.png,"20,00",train,price,2,0.709,numbers,,
+crops/mixed_00360.png,28.00,train,price,8,0.820,numbers,,
+crops/mixed_01165.png,SANDWICHES,train,header,5,0.74,synthetic,Sandwiches,train
+crops/mixed_00488.png,"40,00",test,price,1,0.649,numbers,,
+crops/mixed_01077.png,10,train,price,6,0.64,synthetic,Coffee,train
+crops/mixed_00721.png,70.00,train,price,4,0.764,numbers,,
+crops/mixed_00020.png,"1,00",test,price,7,0.735,numbers,,
+crops/mixed_00598.png,"6,00",train,price,3,0.419,numbers,,
+crops/mixed_00398.png,30,train,price,4,0.668,numbers,,
+crops/mixed_00773.png,8.500,train,price,0,0.920,numbers,,
+crops/mixed_00211.png,16.000,train,price,3,0.687,numbers,,
+crops/mixed_00063.png,10.000,val,price,7,0.917,numbers,,
+crops/mixed_00425.png,34,train,price,10,0.613,numbers,,
+crops/mixed_00477.png,4.50,train,price,2,0.900,numbers,,
+crops/mixed_00555.png,50,train,price,4,0.943,numbers,,
+crops/mixed_00838.png,9.50,train,price,3,1.000,numbers,,
+crops/mixed_00417.png,31,val,price,5,0.646,numbers,,
+crops/mixed_00723.png,70.00,train,price,9,0.819,numbers,,
+crops/mixed_01215.png,Iced Chocolate,train,name,4,0.89,synthetic,Soft Drinks,train
+crops/mixed_00219.png,17,train,price,2,0.560,numbers,,
+crops/mixed_00156.png,13.000,train,price,6,0.757,numbers,,
+crops/mixed_01078.png,Ristretto,train,name,2,0.61,synthetic,Coffee,train
+crops/mixed_00236.png,18,train,price,12,0.997,numbers,,
+crops/mixed_01069.png,French Toast,train,name,8,0.41,synthetic,Breakfast,test
+crops/mixed_01138.png,Green Detox,train,name,0,0.64,synthetic,Juices & Smoothies,val
+crops/mixed_00082.png,"11,50",train,price,8,0.931,numbers,,
+crops/mixed_00553.png,50,train,price,1,0.909,numbers,,
+crops/mixed_01184.png,"6,45",train,price,6,0.77,synthetic,Salads,train
+crops/mixed_00738.png,"75,00",train,price,8,0.788,numbers,,
+crops/mixed_01002.png,Mango Smoothie,test,name,10,0.4,synthetic,Juices & Smoothies,train
+crops/mixed_00800.png,"85,00",val,price,1,0.856,numbers,,
+crops/mixed_01203.png,Carrot Ginger,train,name,11,0.65,synthetic,Juices & Smoothies,train
+crops/mixed_00079.png,"11,00",train,price,1,0.853,numbers,,
+crops/mixed_00450.png,39,train,price,6,0.827,numbers,,
+crops/mixed_00281.png,2.00,train,price,3,0.726,numbers,,
+crops/mixed_01011.png,BREAKFAST,test,header,3,0.75,synthetic,Breakfast,train
+crops/mixed_00641.png,61,train,price,3,0.793,numbers,,
+crops/mixed_00496.png,40.000,train,price,12,0.835,numbers,,
+crops/mixed_00533.png,48,train,price,12,0.549,numbers,,
+crops/mixed_00936.png,Granola Bowl,val,name,12,0.47,synthetic,Breakfast,train
+crops/mixed_00923.png,Flat White,val,name,7,0.76,synthetic,Coffee,train
+crops/mixed_00253.png,19,train,price,12,0.700,numbers,,
+crops/mixed_00265.png,19.000,train,price,9,0.861,numbers,,
+crops/mixed_01117.png,6.34,train,price,5,0.71,synthetic,Pastries,train
+crops/mixed_01231.png,5.03,train,price,0,0.92,synthetic,Coffee,train
+crops/mixed_00162.png,13.500,train,price,9,0.455,numbers,,
+crops/mixed_00456.png,4,train,price,11,0.751,numbers,,
+crops/mixed_00763.png,"8,50",train,price,2,0.882,numbers,,
+crops/mixed_00436.png,35.000,train,price,5,0.868,numbers,,
+crops/mixed_00516.png,45.00,test,price,5,0.963,numbers,,
+crops/mixed_00627.png,"60,00",train,price,6,0.647,numbers,,
+crops/mixed_00453.png,4,train,price,8,0.881,numbers,,
+crops/mixed_00324.png,"22,00",val,price,5,0.464,numbers,,
+crops/mixed_00609.png,6.000,train,price,12,0.625,numbers,,
+crops/mixed_00572.png,54,train,price,2,0.529,numbers,,
+crops/mixed_01051.png,Ristretto,train,name,1,0.73,synthetic,Coffee,train
+crops/mixed_01095.png,7.960,train,price,1,0.79,synthetic,Salads,test
+crops/mixed_00705.png,7.50,train,price,1,0.387,numbers,,
+crops/mixed_00136.png,13,train,price,10,0.448,numbers,,
+crops/mixed_00467.png,4.00,train,price,1,0.305,numbers,,
+crops/mixed_01041.png,DESSERTS,train,header,1,0.63,synthetic,Desserts,train
+crops/mixed_01168.png,Ristretto,train,name,0,0.55,synthetic,Coffee,train
+crops/mixed_01072.png,Lentil Salad,train,name,1,0.47,synthetic,Salads,train
+crops/mixed_01297.png,Chamomile,train,name,1,0.55,synthetic,Tea,val
+crops/mixed_00475.png,4.50,train,price,8,0.799,numbers,,
+crops/mixed_00530.png,47,train,price,0,0.641,numbers,,
+crops/mixed_00180.png,14.000,train,price,9,0.984,numbers,,
+crops/mixed_01186.png,Turkish Coffee,train,name,9,0.89,synthetic,Coffee,train
+crops/mixed_01207.png,Still Water,train,name,2,0.58,synthetic,Soft Drinks,test
+crops/mixed_00987.png,Chicken Salad,test,name,10,0.45,synthetic,Salads,train
+crops/mixed_00005.png,"0,50",train,price,6,0.487,numbers,,
+crops/mixed_01258.png,Labneh Plate,train,name,2,0.42,synthetic,Breakfast,train
+crops/mixed_00671.png,66,val,price,4,0.552,numbers,,
+crops/mixed_01121.png,Panna Cotta,train,name,4,0.48,synthetic,Desserts,val
+crops/mixed_00249.png,18.000,test,price,7,0.408,numbers,,
+crops/mixed_01094.png,7.510,train,price,9,0.91,synthetic,Sandwiches,train
+crops/mixed_00506.png,45,train,price,6,0.426,numbers,,
+crops/mixed_01245.png,10.030,train,price,1,0.87,synthetic,Sandwiches,train
+crops/mixed_01237.png,Cafe au Lait,train,name,8,0.83,synthetic,Coffee,test
+crops/mixed_00199.png,16,train,price,4,0.912,numbers,,
+crops/mixed_00589.png,57,train,price,6,0.815,numbers,,
+crops/mixed_01208.png,SALADS,train,header,4,0.52,synthetic,Salads,train
+crops/mixed_00424.png,34,train,price,0,0.741,numbers,,
+crops/mixed_01242.png,Latte,train,name,1,0.59,synthetic,Coffee,test
+crops/mixed_00999.png,Avocado Toast,test,name,3,0.69,synthetic,Breakfast,train
+crops/mixed_00625.png,"60,00",train,price,11,0.597,numbers,,
+crops/mixed_00486.png,40,train,price,11,0.948,numbers,,
+crops/mixed_00982.png,Still Water,test,name,10,0.59,synthetic,Soft Drinks,test
+crops/mixed_00047.png,"10,00",val,price,5,0.427,numbers,,
+crops/mixed_00874.png,94,val,price,11,0.633,numbers,,
+crops/mixed_00150.png,13.00,train,price,8,0.564,numbers,,
+crops/mixed_00203.png,"16,00",test,price,11,0.981,numbers,,
+crops/mixed_00230.png,17.000,train,price,11,0.788,numbers,,
+crops/mixed_01046.png,7,train,price,8,0.52,synthetic,Juices & Smoothies,train
+crops/mixed_00688.png,"7,00",train,price,2,0.971,numbers,,
+crops/mixed_00240.png,"18,00",train,price,12,0.747,numbers,,
+crops/mixed_00095.png,11.50,train,price,0,0.426,numbers,,
+crops/mixed_00343.png,25.000,train,price,10,0.970,numbers,,
+crops/mixed_00634.png,60.000,test,price,7,0.503,numbers,,
+crops/mixed_00648.png,63,train,price,6,0.929,numbers,,
+crops/mixed_01181.png,7.050,train,price,2,0.65,synthetic,Coffee,train
+crops/mixed_00527.png,46,train,price,10,0.469,numbers,,
+crops/mixed_00290.png,2.000,train,price,2,0.887,numbers,,
+crops/mixed_00086.png,11.00,val,price,7,0.614,numbers,,
+crops/mixed_00674.png,67,test,price,6,0.900,numbers,,
+crops/mixed_00173.png,14.00,train,price,8,0.918,numbers,,
+crops/mixed_01063.png,4.82,train,price,4,0.81,synthetic,Coffee,val
+crops/mixed_00813.png,9,train,price,9,0.601,numbers,,
+crops/mixed_00991.png,Orange Juice,test,name,10,0.89,synthetic,Juices & Smoothies,train
+crops/mixed_00691.png,"7,50",train,price,7,0.744,numbers,,
+crops/mixed_00935.png,Carrot Ginger,val,name,7,0.88,synthetic,Juices & Smoothies,train
+crops/mixed_01274.png,Smoked Salmon Bagel,train,name,4,0.94,synthetic,Breakfast,train
+crops/mixed_01239.png,"11,67",train,price,5,0.78,synthetic,Pastries,train
+crops/mixed_00329.png,22.00,train,price,1,0.452,numbers,,
+crops/mixed_00670.png,66,val,price,12,0.803,numbers,,
+crops/mixed_00621.png,60,train,price,9,0.389,numbers,,
+crops/mixed_00593.png,6,train,price,11,0.885,numbers,,
+crops/mixed_00901.png,99.00,val,price,6,0.631,numbers,,
+crops/mixed_00892.png,98,train,price,4,0.780,numbers,,
+crops/mixed_00293.png,2.50,train,price,1,0.368,numbers,,
+crops/mixed_00311.png,20.000,train,price,0,0.739,numbers,,
+crops/mixed_00000.png,0,train,price,10,0.378,numbers,,
+crops/mixed_00561.png,50.00,train,price,5,0.979,numbers,,
+crops/mixed_00415.png,31,val,price,12,0.986,numbers,,
+crops/mixed_00308.png,20.00,train,price,7,0.998,numbers,,
+crops/mixed_00582.png,55.000,train,price,1,0.535,numbers,,
+crops/mixed_00630.png,60.00,train,price,3,0.629,numbers,,
+crops/mixed_01290.png,Strawberry Smoothie,train,name,8,0.75,synthetic,Juices & Smoothies,train
+crops/mixed_00766.png,8.00,train,price,11,0.425,numbers,,
+crops/mixed_00693.png,"7,50",train,price,1,0.399,numbers,,
+crops/mixed_01045.png,"9,56",train,price,2,0.77,synthetic,Coffee,train
+crops/mixed_00792.png,83,train,price,9,0.320,numbers,,
+crops/mixed_00430.png,"35,00",train,price,4,0.413,numbers,,
+crops/mixed_00196.png,15.000,train,price,8,0.654,numbers,,
+crops/mixed_00983.png,Iced Tea,test,name,3,0.92,synthetic,Tea,train
+crops/mixed_00966.png,6.940,val,price,12,0.61,synthetic,Breakfast,train
+crops/mixed_00302.png,"20,00",train,price,6,0.970,numbers,,
+crops/mixed_00713.png,70,train,price,3,0.312,numbers,,
+crops/mixed_00412.png,30.000,train,price,1,0.619,numbers,,
+crops/mixed_01224.png,10.140,train,price,11,0.45,synthetic,Salads,test
+crops/mixed_00418.png,31,val,price,7,0.672,numbers,,
+crops/mixed_00889.png,97,train,price,6,0.566,numbers,,
+crops/mixed_00316.png,21,train,price,3,0.589,numbers,,
+crops/mixed_00519.png,45.000,train,price,10,0.722,numbers,,
+crops/mixed_01005.png,12,test,price,3,0.63,synthetic,Soft Drinks,train
+crops/mixed_00737.png,"75,00",train,price,1,0.911,numbers,,
+crops/mixed_00127.png,12.50,train,price,4,0.748,numbers,,
+crops/mixed_00963.png,Affogato,val,name,12,0.63,synthetic,Coffee,train
+crops/mixed_00816.png,9,train,price,7,0.414,numbers,,
+crops/mixed_01176.png,Veggie Wrap,train,name,6,0.95,synthetic,Sandwiches,train
+crops/mixed_01132.png,5.03,train,price,2,0.63,synthetic,Coffee,train
+crops/mixed_00680.png,69,train,price,3,0.544,numbers,,
+crops/mixed_00839.png,9.500,train,price,0,0.399,numbers,,
+crops/mixed_00441.png,36,train,price,1,0.733,numbers,,
+crops/mixed_00372.png,"3,00",val,price,9,0.949,numbers,,
+crops/mixed_01084.png,Cheesecake,train,name,6,0.69,synthetic,Desserts,val
+crops/mixed_00686.png,"7,00",train,price,0,0.958,numbers,,
+crops/mixed_00872.png,93,train,price,5,1.000,numbers,,
+crops/mixed_00920.png,9.05 dt,val,price,7,0.8,synthetic,Juices & Smoothies,train
+crops/mixed_00736.png,"75,00",train,price,1,0.383,numbers,,
+crops/mixed_00944.png,"7,08",val,price,12,0.61,synthetic,Sandwiches,train
+crops/mixed_00551.png,5.50,train,price,4,0.698,numbers,,
+crops/mixed_00532.png,48,train,price,2,0.880,numbers,,
+crops/mixed_01151.png,7.050,train,price,2,0.57,synthetic,Coffee,train
+crops/mixed_00896.png,"99,00",train,price,7,0.472,numbers,,
+crops/mixed_01089.png,5.03,train,price,5,0.89,synthetic,Coffee,train
+crops/mixed_01235.png,Cinnamon Roll,train,name,0,0.56,synthetic,Pastries,train
+crops/mixed_00260.png,19.00,train,price,12,0.878,numbers,,
+crops/mixed_00194.png,15.00,train,price,5,0.892,numbers,,
+crops/mixed_00590.png,58,train,price,6,0.794,numbers,,
+crops/mixed_00394.png,3.500,train,price,8,0.495,numbers,,
+crops/mixed_00828.png,9.00,train,price,8,0.561,numbers,,
+crops/mixed_00523.png,45.000,train,price,5,0.478,numbers,,
+crops/mixed_00620.png,6.500,train,price,5,0.963,numbers,,
+crops/mixed_00446.png,37,train,price,2,0.571,numbers,,
+crops/mixed_01012.png,"5,10 dt",test,price,10,0.48,synthetic,Tea,val
+crops/mixed_00805.png,85.000,train,price,6,0.502,numbers,,
+crops/mixed_00746.png,76,train,price,7,0.313,numbers,,
+crops/mixed_00353.png,28,train,price,0,0.417,numbers,,
+crops/mixed_00444.png,37,train,price,3,0.805,numbers,,
+crops/mixed_00610.png,6.000,train,price,3,0.316,numbers,,
+crops/mixed_00111.png,"12,00",train,price,1,0.507,numbers,,
+crops/mixed_00857.png,90.000,train,price,3,0.762,numbers,,
+crops/mixed_00989.png,"5,99",test,price,10,0.41,synthetic,Breakfast,train
+crops/mixed_00594.png,6,train,price,8,0.589,numbers,,
+crops/mixed_00182.png,14.50,test,price,12,0.874,numbers,,
+crops/mixed_01016.png,BREAKFAST,test,header,3,0.79,synthetic,Breakfast,train
+crops/mixed_01017.png,Watermelon Juice,test,name,3,0.77,synthetic,Juices & Smoothies,train
+crops/mixed_00028.png,1.00,train,price,5,0.957,numbers,,
+crops/mixed_00339.png,25,val,price,12,0.470,numbers,,
+crops/mixed_00549.png,5.000,train,price,6,0.480,numbers,,
+crops/mixed_00695.png,7.00,train,price,2,0.762,numbers,,
+crops/mixed_00409.png,30.00,train,price,9,0.471,numbers,,
+crops/mixed_00521.png,45.000,train,price,7,0.669,numbers,,
+crops/mixed_00656.png,65,val,price,1,0.490,numbers,,
+crops/mixed_00359.png,28.00,train,price,1,0.640,numbers,,
+crops/mixed_00930.png,Strawberry Smoothie,val,name,12,0.42,synthetic,Juices & Smoothies,train
+crops/mixed_00791.png,82,train,price,12,0.732,numbers,,
+crops/mixed_00071.png,10.500,train,price,9,0.778,numbers,,
+crops/mixed_01201.png,7.490,train,price,11,0.74,synthetic,Pastries,train
+crops/mixed_00336.png,23,train,price,11,0.461,numbers,,
+crops/mixed_00408.png,30.00,train,price,2,0.410,numbers,,
+crops/mixed_00197.png,15.000,train,price,0,0.492,numbers,,
+crops/mixed_00675.png,67,test,price,7,0.484,numbers,,
+crops/mixed_00024.png,"1,50",train,price,12,0.392,numbers,,
+crops/mixed_01170.png,11,train,price,9,0.48,synthetic,Tea,train
+crops/mixed_00233.png,17.000,train,price,0,0.418,numbers,,
+crops/mixed_00814.png,9,train,price,4,0.828,numbers,,
+crops/mixed_00840.png,9.500,train,price,5,0.732,numbers,,
+crops/mixed_00312.png,20.000,train,price,10,0.872,numbers,,
+crops/mixed_00358.png,"28,00",train,price,12,0.734,numbers,,
+crops/mixed_01113.png,12 TND,train,price,11,0.91,synthetic,Salads,train
+crops/mixed_00967.png,Turkish Coffee,val,name,7,0.86,synthetic,Coffee,train
+crops/mixed_00204.png,"16,00",test,price,4,0.526,numbers,,
+crops/mixed_00227.png,17.00,train,price,8,0.393,numbers,,
+crops/mixed_01036.png,3.91,train,price,4,0.88,synthetic,Breakfast,train
+crops/mixed_01148.png,Club Sandwich,train,name,9,0.64,synthetic,Sandwiches,val
+crops/mixed_00391.png,3.50,train,price,9,0.910,numbers,,
+crops/mixed_01085.png,Iced Latte,train,name,5,0.57,synthetic,Coffee,train
+crops/mixed_00718.png,"70,00",train,price,11,0.302,numbers,,
+crops/mixed_00806.png,86,val,price,6,0.432,numbers,,
+crops/mixed_01240.png,4.900,train,price,11,0.78,synthetic,Desserts,test
+crops/mixed_00273.png,2,val,price,0,0.906,numbers,,
+crops/mixed_00254.png,19,train,price,0,0.596,numbers,,
+crops/mixed_01196.png,Omelette,train,name,9,0.79,synthetic,Breakfast,train
+crops/mixed_00752.png,79,val,price,9,0.505,numbers,,
+crops/mixed_01014.png,Lemon Mint,test,name,10,0.56,synthetic,Juices & Smoothies,train
+crops/mixed_01057.png,Cola,train,name,1,0.68,synthetic,Soft Drinks,train
+crops/mixed_00421.png,33,train,price,0,0.985,numbers,,
+crops/mixed_00801.png,85.00,test,price,3,0.457,numbers,,
+crops/mixed_01062.png,quinoa Salad,train,name,4,0.41,synthetic,Salads,train
+crops/mixed_00754.png,79,val,price,5,0.520,numbers,,
+crops/mixed_00183.png,14.50,test,price,5,0.569,numbers,,
+crops/mixed_00025.png,"1,50",train,price,8,0.325,numbers,,
+crops/mixed_00422.png,33,train,price,12,0.706,numbers,,
+crops/mixed_00181.png,14.50,test,price,0,0.947,numbers,,
+crops/mixed_00830.png,9.00,train,price,9,0.755,numbers,,
+crops/mixed_00819.png,"9,00",train,price,10,0.717,numbers,,
+crops/mixed_00166.png,14,train,price,6,0.614,numbers,,
+crops/mixed_00242.png,18.00,val,price,2,0.722,numbers,,
+crops/mixed_00158.png,13.50,train,price,7,0.992,numbers,,
+crops/mixed_00767.png,8.00,train,price,4,0.888,numbers,,
+crops/mixed_00635.png,60.000,test,price,11,0.473,numbers,,
+crops/mixed_00416.png,31,val,price,1,0.715,numbers,,
+crops/mixed_00573.png,55,train,price,4,0.441,numbers,,
+crops/mixed_00798.png,85,train,price,4,0.598,numbers,,
+crops/mixed_00362.png,28.000,train,price,8,0.824,numbers,,
+crops/mixed_00105.png,12,train,price,7,0.936,numbers,,
+crops/mixed_00682.png,69,train,price,0,0.405,numbers,,
+crops/mixed_01252.png,6.72,train,price,4,0.81,synthetic,Tea,train
+crops/mixed_00698.png,7.00,train,price,10,0.506,numbers,,
+crops/mixed_00948.png,10,val,price,7,0.94,synthetic,Soft Drinks,test
+crops/mixed_00366.png,28.000,train,price,0,0.510,numbers,,
+crops/mixed_00040.png,1.500,train,price,5,0.457,numbers,,
+crops/mixed_00881.png,95.00,train,price,12,0.891,numbers,,
+crops/mixed_00815.png,9,train,price,5,0.493,numbers,,
+crops/mixed_00373.png,"3,00",val,price,3,0.443,numbers,,
+crops/mixed_00315.png,21,train,price,4,0.972,numbers,,
+crops/mixed_00042.png,10,train,price,12,0.874,numbers,,
+crops/mixed_01246.png,10.42,train,price,4,0.82,synthetic,Juices & Smoothies,train
+crops/mixed_01265.png,11 DT,train,price,1,0.42,synthetic,Sandwiches,val
+crops/mixed_00151.png,13.00,train,price,9,0.639,numbers,,
+crops/mixed_00565.png,50.000,train,price,0,0.352,numbers,,
+crops/mixed_00596.png,6,train,price,11,0.569,numbers,,
+crops/mixed_00981.png,Turkish Coffee,test,name,10,0.42,synthetic,Coffee,train
+crops/mixed_00854.png,90.00,train,price,6,0.926,numbers,,
+crops/mixed_00036.png,1.000,train,price,12,0.598,numbers,,
+crops/mixed_00558.png,50.00,train,price,5,0.756,numbers,,
+crops/mixed_00152.png,13.000,train,price,5,0.636,numbers,,
+crops/mixed_00707.png,7.500,train,price,12,0.330,numbers,,
+crops/mixed_00904.png,99.00,val,price,9,0.988,numbers,,
+crops/mixed_00077.png,"11,00",train,price,8,0.651,numbers,,
+crops/mixed_01217.png,9.84 DT,train,price,5,0.91,synthetic,Coffee,train
+crops/mixed_00998.png,Turkey Sandwich,test,name,3,0.9,synthetic,Sandwiches,train
+crops/mixed_00574.png,55,train,price,6,0.789,numbers,,
+crops/mixed_01058.png,10,train,price,8,0.76,synthetic,Soft Drinks,test
+crops/mixed_00722.png,70.00,train,price,1,0.489,numbers,,
+crops/mixed_00564.png,50.000,train,price,7,0.737,numbers,,
+crops/mixed_00452.png,4,train,price,12,0.822,numbers,,
+crops/mixed_00759.png,"8,00",train,price,12,0.368,numbers,,
+crops/mixed_00165.png,14,train,price,11,0.315,numbers,,
+crops/mixed_00268.png,19.000,train,price,10,0.798,numbers,,
+crops/mixed_00652.png,64,train,price,2,0.474,numbers,,
+crops/mixed_00133.png,13,train,price,8,0.937,numbers,,
+crops/mixed_00789.png,81,train,price,4,0.886,numbers,,
+crops/mixed_00341.png,"25,00",val,price,10,0.448,numbers,,
+crops/mixed_00003.png,0,train,price,12,0.330,numbers,,
+crops/mixed_00045.png,10,train,price,11,0.407,numbers,,
+crops/mixed_01191.png,9.070 TND,train,price,5,0.46,synthetic,Sandwiches,train
+crops/mixed_00849.png,"90,00",train,price,10,0.318,numbers,,
+crops/mixed_01128.png,Sparkling Water,train,name,2,0.41,synthetic,Soft Drinks,test
+crops/mixed_00943.png,Ristretto,val,name,7,0.67,synthetic,Coffee,train
+crops/mixed_00094.png,11.000,train,price,12,0.600,numbers,,
+crops/mixed_00052.png,"10,50",train,price,2,0.404,numbers,,
+crops/mixed_01048.png,Scone,train,name,4,0.92,synthetic,Pastries,train
+crops/mixed_01166.png,10,train,price,9,0.86,synthetic,Soft Drinks,train
+crops/mixed_00927.png,8.57,val,price,12,0.47,synthetic,Desserts,train
+crops/mixed_01136.png,"11,13",train,price,0,0.61,synthetic,Pastries,train
+crops/mixed_00500.png,41,train,price,2,0.491,numbers,,
+crops/mixed_00517.png,45.00,test,price,8,0.966,numbers,,
+crops/mixed_01199.png,Scone,train,name,5,0.44,synthetic,Pastries,train
+crops/mixed_00873.png,94,val,price,11,0.394,numbers,,
+crops/mixed_00649.png,63,train,price,3,0.872,numbers,,
+crops/mixed_00703.png,7.000,train,price,3,0.626,numbers,,
+crops/mixed_00208.png,16.00,train,price,11,0.864,numbers,,
+crops/mixed_00351.png,27,train,price,11,0.306,numbers,,
+crops/mixed_00734.png,74,test,price,9,0.796,numbers,,
+crops/mixed_00215.png,16.000,train,price,8,0.501,numbers,,
+crops/mixed_00619.png,6.500,train,price,9,0.875,numbers,,
+crops/mixed_00288.png,2.000,train,price,7,0.944,numbers,,
+crops/mixed_00278.png,"2,00",train,price,4,0.390,numbers,,
+crops/mixed_00159.png,13.50,train,price,10,0.480,numbers,,
+crops/mixed_00566.png,51,train,price,12,0.404,numbers,,
+crops/mixed_00760.png,"8,00",train,price,1,0.543,numbers,,
+crops/mixed_00109.png,"12,00",train,price,4,0.691,numbers,,
+crops/mixed_00911.png,8,val,price,7,0.7,synthetic,Coffee,test
+crops/mixed_01143.png,7.76,train,price,9,0.64,synthetic,Desserts,val
+crops/mixed_01253.png,Green Detox,train,name,2,0.78,synthetic,Juices & Smoothies,val
+crops/mixed_00137.png,"13,00",train,price,4,0.617,numbers,,
+crops/mixed_00899.png,"99,00",train,price,4,0.512,numbers,,
+crops/mixed_00961.png,7,val,price,12,0.73,synthetic,Juices & Smoothies,train
+crops/mixed_00106.png,12,train,price,11,0.359,numbers,,
+crops/mixed_00679.png,69,train,price,11,0.616,numbers,,
+crops/mixed_00954.png,Caprese Sandwich,val,name,12,0.52,synthetic,Sandwiches,train
+crops/mixed_00306.png,20.00,train,price,7,0.853,numbers,,
+crops/mixed_00567.png,51,train,price,12,0.629,numbers,,
+crops/mixed_00836.png,9.50,train,price,1,0.978,numbers,,
+crops/mixed_00683.png,69,train,price,7,0.960,numbers,,
+crops/mixed_00008.png,0.50,train,price,4,0.980,numbers,,
+crops/mixed_01256.png,"11,13",train,price,6,0.43,synthetic,Pastries,train
+crops/mixed_00669.png,66,val,price,6,0.928,numbers,,
+crops/mixed_01028.png,Chamomile,train,name,11,0.59,synthetic,Tea,val
+crops/mixed_00626.png,"60,00",train,price,9,0.614,numbers,,
+crops/mixed_00309.png,20.00,train,price,0,0.778,numbers,,
+crops/mixed_00720.png,70.00,train,price,10,0.832,numbers,,
+crops/mixed_00556.png,"50,00",train,price,4,0.473,numbers,,
+crops/mixed_00853.png,90.00,train,price,12,0.801,numbers,,
+crops/mixed_00448.png,38,train,price,0,0.811,numbers,,
+crops/mixed_01141.png,4.51,train,price,6,0.75,synthetic,Tea,train
+crops/mixed_00291.png,2.50,train,price,1,0.826,numbers,,
+crops/mixed_00378.png,"3,50",train,price,10,0.396,numbers,,
+crops/mixed_00250.png,18.000,test,price,1,0.631,numbers,,
+crops/mixed_00900.png,"99,00",train,price,10,0.629,numbers,,
+crops/mixed_00070.png,10.500,train,price,5,0.857,numbers,,
+crops/mixed_00902.png,99.00,val,price,0,0.979,numbers,,
+crops/mixed_00357.png,"28,00",train,price,4,0.874,numbers,,
+crops/mixed_00955.png,Turkish Coffee,val,name,7,0.6,synthetic,Coffee,train
+crops/mixed_01211.png,Makroudh,train,name,8,0.55,synthetic,Pastries,train
+crops/mixed_01189.png,Club Sandwich,train,name,11,0.69,synthetic,Sandwiches,val
+crops/mixed_00518.png,45.00,test,price,6,0.846,numbers,,
+crops/mixed_00218.png,17,train,price,10,0.819,numbers,,
+crops/mixed_00550.png,5.000,train,price,0,0.730,numbers,,
+crops/mixed_00075.png,11,train,price,9,0.861,numbers,,
+crops/mixed_01038.png,3.090,train,price,4,0.76,synthetic,Sandwiches,train
+crops/mixed_00576.png,"55,00",train,price,11,0.965,numbers,,
+crops/mixed_00636.png,60.000,test,price,3,0.384,numbers,,
+crops/mixed_01216.png,"6,45",train,price,2,0.6,synthetic,Salads,train
+crops/mixed_00009.png,0.50,train,price,10,0.655,numbers,,
+crops/mixed_00074.png,11,train,price,4,0.306,numbers,,
+crops/mixed_01179.png,"5,20",train,price,5,0.73,synthetic,Sandwiches,train
+crops/mixed_00769.png,8.00,train,price,3,0.923,numbers,,
+crops/mixed_00951.png,Mechouia Salad,val,name,12,0.77,synthetic,Salads,test
+crops/mixed_01018.png,7.47,test,price,3,0.68,synthetic,Salads,train
+crops/mixed_01108.png,"4,39",train,price,9,0.56,synthetic,Breakfast,train
+crops/mixed_00307.png,20.00,train,price,6,0.680,numbers,,
+crops/mixed_00660.png,"65,00",train,price,1,0.707,numbers,,
+crops/mixed_00687.png,"7,00",train,price,0,0.930,numbers,,
+crops/mixed_00134.png,13,train,price,1,0.475,numbers,,
+crops/mixed_00405.png,30.00,train,price,12,0.910,numbers,,
+crops/mixed_00271.png,2,val,price,2,0.506,numbers,,
+crops/mixed_00244.png,18.00,val,price,3,0.785,numbers,,
+crops/mixed_00321.png,22,test,price,10,0.725,numbers,,
+crops/mixed_00733.png,73,train,price,0,0.936,numbers,,
+crops/mixed_00685.png,"7,00",train,price,3,0.844,numbers,,
+crops/mixed_01263.png,Cold Brew,train,name,11,0.73,synthetic,Coffee,train
+crops/mixed_00267.png,19.000,train,price,8,0.753,numbers,,
+crops/mixed_00957.png,10.68,val,price,7,0.73,synthetic,Breakfast,train
+crops/mixed_01167.png,Breakfast Burrito,train,name,5,0.74,synthetic,Breakfast,train
+crops/mixed_00535.png,49,val,price,2,0.753,numbers,,
+crops/mixed_00578.png,"55,00",train,price,7,0.788,numbers,,
+crops/mixed_00597.png,6,train,price,4,0.883,numbers,,
+crops/mixed_00673.png,67,test,price,7,0.985,numbers,,
+crops/mixed_00858.png,90.000,train,price,4,0.965,numbers,,
+crops/mixed_00167.png,"14,00",train,price,6,0.672,numbers,,
+crops/mixed_00081.png,"11,00",train,price,11,0.512,numbers,,
+crops/mixed_00504.png,43,test,price,12,0.324,numbers,,
+crops/mixed_00245.png,18.00,val,price,6,0.546,numbers,,
+crops/mixed_00826.png,9.00,train,price,5,0.934,numbers,,
+crops/mixed_00481.png,4.500,train,price,11,0.369,numbers,,
+crops/mixed_00139.png,"13,00",train,price,2,0.368,numbers,,
+crops/mixed_00140.png,"13,00",train,price,3,0.834,numbers,,
+crops/mixed_00380.png,3.00,train,price,1,0.690,numbers,,
+crops/mixed_00164.png,13.500,train,price,9,0.379,numbers,,
+crops/mixed_00116.png,12.00,train,price,8,0.562,numbers,,
+crops/mixed_00322.png,22,test,price,7,0.758,numbers,,
+crops/mixed_01029.png,Rice Pudding,train,name,11,0.53,synthetic,Desserts,train
+crops/mixed_00976.png,Tuna Melt,test,name,10,0.61,synthetic,Sandwiches,train
+crops/mixed_00102.png,12,train,price,12,0.695,numbers,,
+crops/mixed_00117.png,12.00,train,price,0,0.501,numbers,,
+crops/mixed_00642.png,62,train,price,0,0.389,numbers,,
+crops/mixed_01178.png,"6,77",train,price,5,0.93,synthetic,Coffee,train
+crops/mixed_00119.png,12.00,train,price,1,0.378,numbers,,
+crops/mixed_00445.png,37,train,price,11,0.589,numbers,,
+crops/mixed_00607.png,6.00,test,price,11,0.756,numbers,,
+crops/mixed_00388.png,3.000,train,price,7,0.417,numbers,,
+crops/mixed_00317.png,21,train,price,12,0.953,numbers,,
+crops/mixed_00996.png,7.11,test,price,10,0.42,synthetic,Coffee,test
+crops/mixed_01129.png,10,train,price,11,0.92,synthetic,Desserts,train
+crops/mixed_00584.png,55.000,train,price,2,0.563,numbers,,
+crops/mixed_00931.png,"11,13",val,price,7,0.94,synthetic,Pastries,train
+crops/mixed_00543.png,"5,50",train,price,1,0.385,numbers,,
+crops/mixed_00799.png,"85,00",val,price,4,0.542,numbers,,
+crops/mixed_00004.png,0,train,price,9,0.435,numbers,,
+crops/mixed_00776.png,80,test,price,11,0.366,numbers,,
+crops/mixed_00337.png,24,train,price,9,0.326,numbers,,
+crops/mixed_01109.png,Green Detox,train,name,1,0.79,synthetic,Juices & Smoothies,val
+crops/mixed_01213.png,9.84 DT,train,price,4,0.71,synthetic,Coffee,train
+crops/mixed_00437.png,36,train,price,12,0.332,numbers,,
+crops/mixed_00985.png,Apple Turnover,test,name,3,0.68,synthetic,Pastries,train
+crops/mixed_01100.png,Tuna Melt,train,name,4,0.53,synthetic,Sandwiches,train
+crops/mixed_00832.png,9.000,train,price,9,0.506,numbers,,
+crops/mixed_00340.png,"25,00",val,price,1,0.773,numbers,,
+crops/mixed_00484.png,40,train,price,3,0.688,numbers,,
+crops/mixed_01285.png,Lentil Salad,train,name,2,0.7,synthetic,Salads,train
+crops/mixed_00030.png,1.00,train,price,10,0.804,numbers,,
+crops/mixed_00103.png,12,train,price,2,0.608,numbers,,
+crops/mixed_00200.png,16,train,price,12,0.816,numbers,,
+crops/mixed_00907.png,99.000,val,price,6,0.325,numbers,,
+crops/mixed_00154.png,13.000,train,price,3,0.880,numbers,,
+crops/mixed_00511.png,"45,00",val,price,8,0.519,numbers,,
+crops/mixed_00947.png,SANDWICHES,val,header,7,0.69,synthetic,Sandwiches,train
+crops/mixed_01101.png,Croissant,train,name,5,0.62,synthetic,Pastries,train
+crops/mixed_00375.png,"3,00",val,price,10,0.896,numbers,,
+crops/mixed_01183.png,11.23,train,price,11,0.84,synthetic,Juices & Smoothies,train
+crops/mixed_00287.png,2.000,train,price,1,0.591,numbers,,
+crops/mixed_00918.png,11.23,val,price,7,0.54,synthetic,Juices & Smoothies,train
+crops/mixed_01226.png,10.10 TND,train,price,1,0.44,synthetic,Tea,val
+crops/mixed_00392.png,3.50,train,price,4,0.739,numbers,,
+crops/mixed_00509.png,45,train,price,2,0.653,numbers,,
+crops/mixed_00223.png,"17,00",train,price,1,0.651,numbers,,
+crops/mixed_00694.png,7.00,train,price,1,0.641,numbers,,
+crops/mixed_00824.png,"9,50",train,price,7,0.394,numbers,,
+crops/mixed_00124.png,12.000,test,price,4,0.661,numbers,,
+crops/mixed_00201.png,16,train,price,9,0.546,numbers,,
+crops/mixed_00110.png,"12,00",train,price,10,0.769,numbers,,
+crops/mixed_00956.png,Mango Smoothie,val,name,7,0.93,synthetic,Juices & Smoothies,train
+crops/mixed_00841.png,9.500,train,price,0,0.922,numbers,,
+crops/mixed_00867.png,92,train,price,12,0.856,numbers,,
+crops/mixed_00725.png,70.000,train,price,4,0.433,numbers,,
+crops/mixed_00882.png,95.000,train,price,8,0.882,numbers,,
+crops/mixed_01260.png,Lemon Mint,train,name,8,0.47,synthetic,Juices & Smoothies,train
+crops/mixed_00193.png,15.00,train,price,0,0.894,numbers,,
+crops/mixed_00389.png,3.000,train,price,2,0.845,numbers,,
+crops/mixed_00833.png,9.000,train,price,8,0.620,numbers,,
+crops/mixed_01097.png,Scone,train,name,2,0.63,synthetic,Pastries,train
+crops/mixed_00497.png,40.000,train,price,9,0.536,numbers,,
+crops/mixed_00968.png,4.600,test,price,10,0.84,synthetic,Pastries,train
+crops/mixed_00270.png,2,val,price,5,0.809,numbers,,
+crops/mixed_00438.png,36,train,price,2,0.370,numbers,,
+crops/mixed_00994.png,"6,77",test,price,3,0.75,synthetic,Coffee,train
+crops/mixed_00570.png,53,test,price,12,0.628,numbers,,
+crops/mixed_00487.png,"40,00",test,price,7,0.658,numbers,,
+crops/mixed_01052.png,2,train,price,1,0.69,synthetic,Pastries,train
+crops/mixed_01110.png,11.23,train,price,5,0.56,synthetic,Juices & Smoothies,train
+crops/mixed_00676.png,68,train,price,2,0.897,numbers,,
+crops/mixed_00064.png,10.50,train,price,4,0.841,numbers,,
+crops/mixed_00138.png,"13,00",train,price,11,0.992,numbers,,
+crops/mixed_00468.png,4.00,train,price,8,0.643,numbers,,
+crops/mixed_00120.png,12.00,train,price,3,0.699,numbers,,
+crops/mixed_00145.png,"13,50",train,price,9,0.925,numbers,,
+crops/mixed_00014.png,0.500,test,price,6,0.810,numbers,,
+crops/mixed_01275.png,5.03,train,price,11,0.48,synthetic,Coffee,train
+crops/mixed_00471.png,4.000,train,price,11,0.873,numbers,,
+crops/mixed_00043.png,10,train,price,1,0.714,numbers,,
+crops/mixed_00692.png,"7,50",train,price,12,0.482,numbers,,
+crops/mixed_00131.png,12.500,train,price,10,0.543,numbers,,
+crops/mixed_00460.png,"4,00",train,price,4,0.385,numbers,,
+crops/mixed_00507.png,45,train,price,1,0.367,numbers,,
+crops/mixed_00247.png,18.000,test,price,5,0.716,numbers,,
+crops/mixed_00924.png,Ristretto,val,name,7,0.54,synthetic,Coffee,train
+crops/mixed_01059.png,10.65,train,price,2,0.74,synthetic,Pastries,train
+crops/mixed_00897.png,"99,00",train,price,10,0.368,numbers,,
+crops/mixed_00764.png,"8,50",train,price,11,0.768,numbers,,
+crops/mixed_01194.png,9.84 DT,train,price,4,0.85,synthetic,Coffee,train
+crops/mixed_00638.png,61,train,price,4,0.630,numbers,,
+crops/mixed_00411.png,30.000,train,price,5,0.872,numbers,,
+crops/mixed_01153.png,Chicken Panini,train,name,5,0.81,synthetic,Sandwiches,val
+crops/mixed_00433.png,35.000,train,price,7,0.674,numbers,,
+crops/mixed_00866.png,92,train,price,5,0.873,numbers,,
+crops/mixed_01080.png,BREAKFAST,train,header,4,0.94,synthetic,Breakfast,train
+crops/mixed_01202.png,Tuna Melt,train,name,9,0.67,synthetic,Sandwiches,train
+crops/mixed_00338.png,24,train,price,4,0.458,numbers,,
+crops/mixed_01125.png,Pain au Chocolat,train,name,9,0.76,synthetic,Pastries,train
+crops/mixed_00973.png,10.950 DT,test,price,3,0.59,synthetic,Soft Drinks,val
+crops/mixed_00262.png,19.00,train,price,6,0.745,numbers,,
+crops/mixed_00257.png,"19,00",train,price,12,0.500,numbers,,
+crops/mixed_01090.png,"7,88",train,price,6,0.75,synthetic,Salads,train
+crops/mixed_00141.png,"13,00",train,price,3,0.708,numbers,,
+crops/mixed_00995.png,Scone,test,name,3,0.45,synthetic,Pastries,train
+crops/mixed_00175.png,14.00,train,price,8,0.758,numbers,,
+crops/mixed_01250.png,Scrambled Eggs,train,name,5,0.63,synthetic,Breakfast,train
+crops/mixed_00493.png,40.00,train,price,5,0.343,numbers,,
+crops/mixed_00118.png,12.00,train,price,2,0.684,numbers,,
+crops/mixed_00490.png,"40,00",test,price,12,0.322,numbers,,
+crops/mixed_00629.png,"60,00",train,price,0,0.955,numbers,,
+crops/mixed_00743.png,75.000,train,price,7,0.799,numbers,,
+crops/mixed_00229.png,17.00,train,price,7,0.626,numbers,,
+crops/mixed_00039.png,1.500,train,price,7,0.529,numbers,,
+crops/mixed_01000.png,Affogato,test,name,10,0.52,synthetic,Coffee,train
+crops/mixed_00663.png,65.00,train,price,11,0.964,numbers,,
+crops/mixed_00001.png,0,train,price,0,0.366,numbers,,
+crops/mixed_01086.png,Affogato,train,name,4,0.67,synthetic,Coffee,train
+crops/mixed_01104.png,5.910 dt,train,price,1,0.54,synthetic,Juices & Smoothies,train
+crops/mixed_00330.png,22.000,train,price,3,0.666,numbers,,
+crops/mixed_00765.png,"8,50",train,price,4,0.392,numbers,,
+crops/mixed_01185.png,Double Espresso,train,name,1,0.7,synthetic,Coffee,train
+crops/mixed_01278.png,7.490,train,price,8,0.64,synthetic,Pastries,train
+crops/mixed_01289.png,Makroudh,train,name,1,0.58,synthetic,Pastries,train
+crops/mixed_00611.png,6.000,train,price,4,0.700,numbers,,
+crops/mixed_00217.png,17,train,price,4,0.789,numbers,,
+crops/mixed_01039.png,Lentil Salad,train,name,8,0.51,synthetic,Salads,train
+crops/mixed_00365.png,28.000,train,price,5,0.973,numbers,,
+crops/mixed_01025.png,TEA,test,header,10,0.67,synthetic,Tea,train
+crops/mixed_00539.png,"5,00",train,price,3,0.365,numbers,,
+crops/mixed_00006.png,"0,50",train,price,2,0.485,numbers,,
+crops/mixed_00929.png,7.11,val,price,12,0.57,synthetic,Coffee,test
+crops/mixed_00323.png,"22,00",val,price,6,0.555,numbers,,
+crops/mixed_00890.png,97,train,price,3,0.721,numbers,,
+crops/mixed_00601.png,"6,00",train,price,6,0.866,numbers,,
+crops/mixed_01298.png,Chocolate Brownie,train,name,8,0.69,synthetic,Pastries,train
+crops/mixed_01268.png,7.050,train,price,9,0.7,synthetic,Coffee,train
+crops/mixed_01229.png,Iced Latte,train,name,4,0.54,synthetic,Coffee,train
+crops/mixed_01099.png,Fruit Tart,train,name,5,0.59,synthetic,Desserts,train
+crops/mixed_00234.png,18,train,price,4,0.612,numbers,,
+crops/mixed_00023.png,"1,00",test,price,10,0.744,numbers,,
+crops/mixed_01133.png,Cappuccino,train,name,9,0.74,synthetic,Coffee,train
+crops/mixed_00514.png,"45,00",val,price,2,0.884,numbers,,
+crops/mixed_01083.png,Almond Tart,train,name,11,0.72,synthetic,Pastries,train
+crops/mixed_00958.png,7.90,val,price,7,0.78,synthetic,Soft Drinks,train
+crops/mixed_00781.png,80.00,train,price,7,0.643,numbers,,
+crops/mixed_00788.png,80.000,train,price,2,0.610,numbers,,
+crops/mixed_00130.png,12.500,train,price,3,0.386,numbers,,
+crops/mixed_01288.png,DESSERTS,train,header,0,0.73,synthetic,Desserts,train
+crops/mixed_00327.png,22.00,train,price,5,0.721,numbers,,
+crops/mixed_00313.png,20.000,train,price,1,0.702,numbers,,
+crops/mixed_00224.png,"17,00",train,price,5,0.360,numbers,,
+crops/mixed_00096.png,11.50,train,price,0,0.409,numbers,,
+crops/mixed_00186.png,15,train,price,6,0.978,numbers,,
+crops/mixed_01010.png,9 TND,test,price,10,0.49,synthetic,Tea,test
+crops/mixed_01043.png,Watermelon Juice,train,name,5,0.87,synthetic,Juices & Smoothies,train
+crops/mixed_00283.png,2.00,train,price,1,0.806,numbers,,
+crops/mixed_01219.png,"5,99",train,price,1,0.43,synthetic,Breakfast,train
+crops/mixed_00741.png,75.00,test,price,0,0.354,numbers,,
+crops/mixed_00817.png,"9,00",train,price,3,0.845,numbers,,
+crops/mixed_01195.png,11.020,train,price,2,0.49,synthetic,Tea,val
+crops/mixed_00877.png,95,train,price,5,0.463,numbers,,
+crops/mixed_00538.png,5,train,price,11,0.583,numbers,,
+crops/mixed_01103.png,Lemonade,train,name,0,0.42,synthetic,Soft Drinks,val
+crops/mixed_01279.png,10.10 TND,train,price,8,0.5,synthetic,Tea,val
+crops/mixed_00505.png,43,test,price,10,0.610,numbers,,
+crops/mixed_01293.png,10.65,train,price,1,0.85,synthetic,Pastries,train
+crops/mixed_00542.png,"5,50",train,price,7,0.450,numbers,,
+crops/mixed_00292.png,2.50,train,price,7,0.611,numbers,,
+crops/mixed_00939.png,"4,39",val,price,7,0.7,synthetic,Breakfast,train
+crops/mixed_00810.png,87,train,price,11,0.418,numbers,,
+crops/mixed_01022.png,"5,10 dt",test,price,3,0.82,synthetic,Tea,val
+crops/mixed_00435.png,35.000,train,price,7,0.758,numbers,,
+crops/mixed_00644.png,62,train,price,4,0.332,numbers,,
+crops/mixed_01161.png,11.23,train,price,5,0.44,synthetic,Juices & Smoothies,train
+crops/mixed_00432.png,35.00,val,price,1,0.920,numbers,,
+crops/mixed_00135.png,13,train,price,2,0.761,numbers,,
+crops/mixed_00548.png,5.00,train,price,8,0.928,numbers,,
+crops/mixed_00821.png,"9,00",train,price,10,0.864,numbers,,
+crops/mixed_00646.png,62,train,price,12,0.659,numbers,,
+crops/mixed_01287.png,10.98,train,price,5,0.49,synthetic,Juices & Smoothies,train
+crops/mixed_00469.png,4.00,train,price,4,0.510,numbers,,
+crops/mixed_00114.png,"12,50",val,price,4,0.337,numbers,,
+crops/mixed_00664.png,65.00,train,price,9,0.826,numbers,,
+crops/mixed_00449.png,39,train,price,7,0.768,numbers,,
+crops/mixed_01140.png,"3,01",train,price,1,0.84,synthetic,Pastries,train
+crops/mixed_00552.png,5.500,val,price,0,0.455,numbers,,
+crops/mixed_00777.png,"80,00",train,price,8,0.679,numbers,,
+crops/mixed_00946.png,6.48,val,price,12,0.63,synthetic,Sandwiches,train
+crops/mixed_00334.png,23,train,price,9,0.666,numbers,,
+crops/mixed_01295.png,4.82,train,price,0,0.71,synthetic,Coffee,val
+crops/mixed_01093.png,10.42,train,price,9,0.61,synthetic,Juices & Smoothies,train
+crops/mixed_00350.png,27,train,price,11,0.736,numbers,,
+crops/mixed_00146.png,"13,50",train,price,8,0.673,numbers,,
+crops/mixed_00546.png,5.00,train,price,3,0.930,numbers,,
+crops/mixed_00429.png,"35,00",train,price,4,0.506,numbers,,
+crops/mixed_00727.png,71,train,price,1,0.799,numbers,,
+crops/mixed_00758.png,8,train,price,1,0.407,numbers,,
+crops/mixed_00333.png,22.000,train,price,6,0.394,numbers,,
+crops/mixed_00747.png,76,train,price,12,0.319,numbers,,
+crops/mixed_00928.png,Still Water,val,name,7,0.85,synthetic,Soft Drinks,test
+crops/mixed_01267.png,"5,85",train,price,5,0.91,synthetic,Desserts,train
+crops/mixed_01261.png,Makroudh,train,name,8,0.48,synthetic,Pastries,train
+crops/mixed_00206.png,"16,00",test,price,10,0.511,numbers,,
+crops/mixed_01283.png,Kunafa,train,name,6,0.43,synthetic,Desserts,train
+crops/mixed_00163.png,13.500,train,price,12,0.765,numbers,,
+crops/mixed_00592.png,59,train,price,6,0.722,numbers,,
+crops/mixed_00466.png,4.00,train,price,9,0.719,numbers,,
+crops/mixed_00093.png,11.000,train,price,1,0.705,numbers,,
+crops/mixed_00142.png,"13,50",train,price,2,0.918,numbers,,
+crops/mixed_00393.png,3.50,train,price,12,0.304,numbers,,
+crops/mixed_01182.png,"6,05",train,price,9,0.57,synthetic,Coffee,train
+crops/mixed_00740.png,75.00,test,price,12,0.847,numbers,,
+crops/mixed_00600.png,"6,00",train,price,3,0.952,numbers,,
+crops/mixed_01130.png,9.84 DT,train,price,9,0.5,synthetic,Coffee,train
+crops/mixed_00161.png,13.500,train,price,4,0.412,numbers,,
+crops/mixed_00775.png,80,test,price,12,0.730,numbers,,
+crops/mixed_00255.png,"19,00",train,price,1,0.572,numbers,,
+crops/mixed_01098.png,Lentil Salad,train,name,8,0.91,synthetic,Salads,train
+crops/mixed_00940.png,Chai Latte,val,name,7,0.42,synthetic,Tea,train
+crops/mixed_00088.png,11.00,val,price,1,0.525,numbers,,
+crops/mixed_00541.png,"5,00",train,price,9,0.464,numbers,,
+crops/mixed_01236.png,SANDWICHES,train,header,9,0.89,synthetic,Sandwiches,train
+crops/mixed_00704.png,7.50,train,price,9,0.925,numbers,,
+crops/mixed_00735.png,74,test,price,1,0.331,numbers,,
+crops/mixed_00198.png,15.000,train,price,12,0.680,numbers,,
+crops/mixed_00778.png,"80,00",train,price,3,0.364,numbers,,
+crops/mixed_00189.png,15,train,price,11,0.596,numbers,,
+crops/mixed_01292.png,4.51,train,price,9,0.85,synthetic,Tea,train
+crops/mixed_00689.png,"7,50",train,price,8,0.383,numbers,,
+crops/mixed_00440.png,36,train,price,9,0.426,numbers,,
+crops/mixed_00318.png,21,train,price,5,0.550,numbers,,
+crops/mixed_01272.png,quinoa Salad,train,name,8,0.74,synthetic,Salads,train
+crops/mixed_00696.png,7.00,train,price,2,0.665,numbers,,
+crops/mixed_00865.png,92,train,price,10,0.936,numbers,,
+crops/mixed_00326.png,22.00,train,price,12,0.637,numbers,,
+crops/mixed_00013.png,0.500,test,price,1,0.660,numbers,,
+crops/mixed_00569.png,52,train,price,5,0.438,numbers,,
+crops/mixed_01206.png,Strawberry Smoothie,train,name,5,0.84,synthetic,Juices & Smoothies,train
+crops/mixed_00919.png,Cortado,val,name,12,0.45,synthetic,Coffee,val
+crops/mixed_00451.png,39,train,price,11,0.842,numbers,,
+crops/mixed_00859.png,90.000,train,price,12,0.504,numbers,,
+crops/mixed_01291.png,Cortado,train,name,8,0.78,synthetic,Coffee,val
+crops/mixed_00407.png,30.00,train,price,0,0.704,numbers,,
+crops/mixed_01149.png,11,train,price,2,0.58,synthetic,Tea,train
+crops/mixed_00054.png,"10,50",train,price,12,0.445,numbers,,
+crops/mixed_01232.png,Creme Brulee,train,name,1,0.86,synthetic,Desserts,train
+crops/mixed_01034.png,Macchiato,train,name,11,0.68,synthetic,Coffee,train
+crops/mixed_00476.png,4.50,train,price,11,0.554,numbers,,
+crops/mixed_00447.png,38,train,price,9,0.979,numbers,,
+crops/mixed_00191.png,"15,00",train,price,2,0.753,numbers,,
+crops/mixed_00061.png,10.000,val,price,12,0.685,numbers,,
+crops/mixed_00065.png,10.50,train,price,2,0.613,numbers,,
+crops/mixed_00864.png,91,train,price,6,0.803,numbers,,
+crops/mixed_01209.png,Chamomile,train,name,2,0.75,synthetic,Tea,val
+crops/mixed_00178.png,14.000,train,price,5,0.972,numbers,,
+crops/mixed_01116.png,"11,67",train,price,0,0.92,synthetic,Pastries,train
+crops/mixed_00209.png,16.00,train,price,1,0.671,numbers,,
+crops/mixed_00285.png,2.00,train,price,5,0.550,numbers,,
+crops/mixed_00457.png,"4,00",train,price,7,0.715,numbers,,
+crops/mixed_00501.png,41,train,price,0,0.902,numbers,,
+crops/mixed_00563.png,50.000,train,price,9,0.510,numbers,,
+crops/mixed_00051.png,"10,50",train,price,2,0.492,numbers,,
+crops/mixed_00228.png,17.00,train,price,11,0.882,numbers,,
