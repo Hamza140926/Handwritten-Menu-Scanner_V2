@@ -28,7 +28,7 @@ logger = get_logger(__name__)
 
 # Tunables from pairing_experiment.py
 MAX_TILT_DEG = 8.0              # Max angle to tilt pairing line
-CATEGORY_HEIGHT_RATIO = 1.35    # Box taller than median*this = category
+CATEGORY_HEIGHT_RATIO = 1.8     # Box taller than median*this = category (was 1.35)
 NOISE_HEIGHT_RATIO = 4.0        # Box taller than median*this = decorative
                                  # illustration blob, not text - excluded
                                  # entirely from classification/pairing AND
@@ -104,6 +104,7 @@ def classify_boxes(boxes: List[Box]) -> float:
             b.kind = "noise"
         elif b.height > category_cutoff:
             b.kind = "category"
+            logger.debug(f"  Classified as CATEGORY: '{b.text[:30]}' (h={b.height:.1f}, cutoff={category_cutoff:.1f})")
         else:
             b.kind = "item"
 

@@ -90,7 +90,7 @@ class RecognitionConfig:
     """Handwriting recognition configuration."""
     
     # Model selection
-    model_checkpoint: str = "models/trocr_menu_v1/checkpoints/checkpoint-1538"
+    model_checkpoint: str = "models/trocr_menu_v1_digits_v3/checkpoints/checkpoint-765"
     # Alternatives: 
     # "microsoft/trocr-base-handwritten" (pretrained base model)
     # "microsoft/trocr-large-handwritten" (more accurate, slower)
