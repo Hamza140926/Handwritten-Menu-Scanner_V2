@@ -104,7 +104,9 @@ def classify_boxes(boxes: List[Box]) -> float:
             b.kind = "noise"
         elif b.height > category_cutoff:
             b.kind = "category"
-            logger.debug(f"  Classified as CATEGORY: '{b.text[:30]}' (h={b.height:.1f}, cutoff={category_cutoff:.1f})")
+            # Debug: show which boxes are classified as categories
+            text = b.region.get("text", "")[:30] if b.region.get("text") else "N/A"
+            logger.debug(f"  Classified as CATEGORY: '{text}' (h={b.height:.1f}, cutoff={category_cutoff:.1f})")
         else:
             b.kind = "item"
 
