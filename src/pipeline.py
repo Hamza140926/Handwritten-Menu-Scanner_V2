@@ -697,6 +697,30 @@ def run_pipeline(
         raise AssemblyError(f"Menu assembly failed: {e}") from e
 
 
+def _confidence_band(confidence: float) -> str:
+    """Map a 0-1 confidence score to the same tiering the UI will use for
+    color-coding (green/yellow/orange/red), so the CLI output and the
+    eventual UI agree on what "needs review" means.
+
+        >= 0.80        green
+        0.50 - 0.80    yellow
+        0.20 - 0.50    orange
+        < 0.20         red
+    """
+    if confidence is None:
+        return ""
+    pct = confidence * 100
+    if pct >= 80:
+        band = "green"
+    elif pct >= 50:
+        band = "yellow"
+    elif pct >= 20:
+        band = "orange"
+    else:
+        band = "red"
+    return f"({pct:.0f}% {band})"
+
+
 if __name__ == "__main__":
     import sys
     import argparse
@@ -771,13 +795,15 @@ if __name__ == "__main__":
         # Display results
         print(f"\n{'='*50}\nMENU\n{'='*50}")
         for item in menu["items"]:
+            name_conf = _confidence_band(item.get("name_confidence"))
             if item["is_category_header"]:
-                print(f"\n--- {item['name']} ---")
+                print(f"\n--- {item['name']} {name_conf} ---")
             else:
                 price = item["price_value"] if item["price_value"] is not None else "?"
                 flag = " (ambiguous)" if item["price_ambiguous"] else ""
                 currency_str = item["currency"] or ""
-                print(f"  {item['name']:25s} {price} {currency_str}{flag}")
+                price_conf = _confidence_band(item.get("price_confidence"))
+                print(f"  {item['name']:25s} {name_conf:16s} {price} {currency_str} {price_conf}{flag}")
 
         if menu["orphan_prices"]:
             print(f"\n{'='*50}\nUNMATCHED PRICES (need manual review)\n{'='*50}")
