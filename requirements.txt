@@ -18,6 +18,7 @@ paddlepaddle==3.3.1
 
 # Numerical Computing
 numpy==2.1.3
+scipy==1.14.1  # Hungarian algorithm for global optimization pairing
 
 # System Utilities
 psutil==5.9.5

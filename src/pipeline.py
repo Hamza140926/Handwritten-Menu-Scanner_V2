@@ -13,44 +13,20 @@ Why this file exists (and isn't just a thin glue script):
     that belongs here, not in recognition.py or postprocess.py, which
     each only look at one region at a time.
 
-Pairing strategy (deliberately position-based, not text-based):
-    - Split regions into two columns by x-coordinate gap (largest gap in
-      sorted x-positions - works for a free-form 2-column layout without
-      assuming fixed pixel thresholds, since photos vary in resolution).
-    - Whichever column has more regions with a successfully extracted
-      numeric price (postprocess.py's price_value) is treated as the
-      price column; the other is the name column. This is data-driven
-      rather than hardcoded "left=name", though in practice it will
-      usually land that way for LTR-written menus.
-    - Pair each name with its nearest price region by y-distance
-      (nearest-neighbor, one-to-one). This is deliberately POSITION-based
-      rather than TEXT-based: a price region whose text OCR'd to garbage
-      (e.g. no digits recognized at all) still gets correctly linked to
-      its item by position, rather than being mistaken for a second
-      name/header just because its text didn't look like a price. This
-      was confirmed necessary against a real scan where one price region
-      recognized as unreadable garbage ('gdt .') still needed to end up
-      attached to its item ('mocha'), not dropped or misclassified.
-    - A name with no nearby price within a reasonable y-distance is
-      treated as a category header (e.g. "Coffee", "Non Coffee") - this
-      matches how real menus are actually laid out (confirmed against
-      the same real scan).
-    - A price with no nearby name is kept as an "orphan" and flagged for
-      manual review rather than silently dropped, per the spec's
-      correction-first philosophy (§2: build for correction, not
-      perfection - never silently discard a signal the owner could fix).
-
-This is a best-effort layout heuristic, not a guarantee - see spec §10
-(open questions) re: whether a more robust layout model is ever needed.
-Downstream (the review UI) should treat "is_category_header" and
-"orphan" as hints, not ground truth.
+Structure (category/item/pairing) is decided entirely from box geometry
+by pairing.build_skeleton() right after detection, before recognition
+ever runs - see pairing.py's module docstring for the classification/
+pairing algorithm (shape-based noise filtering, 3-signal category vote,
+Hungarian-algorithm name<->price pairing). This file's job is just to
+wire that skeleton together with recognized text/price and produce the
+final menu structure + quality metrics.
 """
 
 from preprocessing import preprocess_image
 from detection import detect_text_regions, draw_regions_debug
 from recognition import recognize_regions
 from postprocess import process_recognition_results
-from pairing import pair_regions_advanced, build_skeleton
+from pairing import build_skeleton
 from validation import validate_image_input, validate_currency, ValidationError
 from exceptions import (
     PipelineError, PreprocessingError, DetectionError, 
@@ -111,7 +87,22 @@ def _price_hit_rate(column: list) -> float:
     return hits / len(column)
 
 
+def _write_pairing_debug_image(image, regions: list, skeleton: list, output_path: str) -> str:
+    """Render the color-coded skeleton (categories/items/noise/unresolved
+    + pairing lines) over the source image and save it. Thin wrapper
+    around detection.draw_regions_debug so run_pipeline and
+    interactive_detection share one implementation.
+
+    Returns output_path for convenience (also logged).
+    """
+    debug_image = draw_regions_debug(image, regions, skeleton)
+    cv2.imwrite(output_path, debug_image)
+    logger.info("Pairing debug image written", extra={"path": output_path})
+    return output_path
+
+
 def identify_name_and_price_columns(left: list, right: list) -> tuple:
+
     """Decide which of the two columns from split_columns is the name
     column and which is the price column, based on which one actually
     contains more successfully-parsed prices - not by assuming a fixed
@@ -206,93 +197,6 @@ def pair_items(
     return items, orphan_prices
 
 
-def assemble_menu(processed_regions: list, max_y_distance: float = None) -> dict:
-    """Turn postprocess.py's flat list of regions into a structured menu:
-    category headers, named items with prices, and any orphaned prices
-    that need manual review.
-    
-    Uses advanced tilted-line pairing algorithm from pairing.py for better
-    accuracy than simple y-distance nearest-neighbor.
-    
-    Also calculates quality metrics to help identify low-quality scans.
-
-    Returns a dict:
-        "items":          list from pair_regions_advanced()
-        "orphan_prices":  list from pair_regions_advanced()
-        "quality_metrics": dict with:
-            "total_regions": total text regions detected
-            "items_with_prices": count of items with prices
-            "category_headers": count of category headers (no price)
-            "orphan_prices": count of unmatched prices
-            "pairing_success_rate": % of items successfully paired with prices
-            "avg_confidence": average recognition confidence (0-1)
-            "low_confidence_items": count of items with confidence < threshold
-            "ambiguous_prices": count of prices flagged as ambiguous
-            "warnings": list of quality warnings
-    """
-    cfg = get_config().pipeline
-    
-    # Use advanced pairing algorithm (replaces simple y-distance pairing)
-    items, orphan_prices = pair_regions_advanced(processed_regions)
-    
-    # Calculate quality metrics
-    total_regions = len(processed_regions)
-    items_with_prices = sum(1 for item in items if item["price_value"] is not None)
-    category_headers = sum(1 for item in items if item["is_category_header"])
-    orphan_count = len(orphan_prices)
-    
-    # Pairing success rate (excluding category headers)
-    non_header_items = len(items) - category_headers
-    pairing_success_rate = (items_with_prices / non_header_items * 100) if non_header_items > 0 else 0.0
-    
-    # Average confidence across all recognized text
-    all_confidences = [r.get("confidence", 0.0) for r in processed_regions]
-    avg_confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
-    
-    # Low confidence items
-    low_confidence_items = sum(1 for r in processed_regions if r.get("confidence", 0.0) < cfg.min_confidence_warning)
-    
-    # Ambiguous prices
-    ambiguous_prices = sum(1 for r in processed_regions if r.get("price_ambiguous", False))
-    
-    # Generate warnings
-    warnings = []
-    
-    if avg_confidence < cfg.min_confidence_warning:
-        warnings.append(f"Low average confidence ({avg_confidence:.1%}). Image quality may be poor.")
-    
-    if pairing_success_rate < 50:
-        warnings.append(f"Low pairing success rate ({pairing_success_rate:.1f}%). Menu layout may be unusual.")
-    
-    orphan_ratio = orphan_count / total_regions if total_regions > 0 else 0
-    if orphan_ratio > cfg.max_orphan_price_ratio:
-        warnings.append(f"High orphan price ratio ({orphan_ratio:.1%}). Many prices couldn't be paired with items.")
-    
-    if low_confidence_items > total_regions * 0.3:
-        warnings.append(f"{low_confidence_items} regions have low confidence. Manual review recommended.")
-    
-    if ambiguous_prices > 0:
-        warnings.append(f"{ambiguous_prices} prices have ambiguous numbers. Review recommended.")
-    
-    quality_metrics = {
-        "total_regions": total_regions,
-        "items_with_prices": items_with_prices,
-        "category_headers": category_headers,
-        "orphan_prices": orphan_count,
-        "pairing_success_rate": round(pairing_success_rate, 1),
-        "avg_confidence": round(avg_confidence, 3),
-        "low_confidence_items": low_confidence_items,
-        "ambiguous_prices": ambiguous_prices,
-        "warnings": warnings
-    }
-    
-    return {
-        "items": items,
-        "orphan_prices": orphan_prices,
-        "quality_metrics": quality_metrics
-    }
-
-
 def assemble_from_skeleton(
     skeleton: list, recognized_by_box_id: dict, default_currency: str = None
 ) -> dict:
@@ -300,86 +204,119 @@ def assemble_from_skeleton(
     after detection) with recognized text/price (keyed by box_id, only
     present for non-noise boxes) into the final menu structure.
 
-    This is the skeleton-first counterpart to assemble_menu(): structure
-    (category/item/pairing) was already decided from geometry before
-    recognition ran, so this function's only job is to drop recognized
-    text and parsed price into the slots geometry already found - plus
-    resolve "unresolved" boxes (see build_skeleton's docstring), the one
-    case geometry couldn't settle on its own.
+    Structure (category/item/pairing) was already decided from geometry
+    before recognition ran, so this function's only job is to drop
+    recognized text and parsed price into the slots geometry already
+    found - plus resolve "unresolved" boxes (see build_skeleton's
+    docstring), the one case geometry couldn't settle on its own.
 
-    Returns the same shape as assemble_menu(): {"items", "orphan_prices",
-    "quality_metrics"}.
+    Returns:
+        {"items", "orphan_prices", "quality_metrics"}.
     """
     if default_currency is None:
         default_currency = get_config().postprocessing.default_currency
     cfg = get_config().pipeline
 
-    items = []
+    # box_id is the index skeleton entries were built in (build_skeleton
+    # iterates `for box in boxes` where boxes = [Box(i, r) for i, r in
+    # enumerate(regions)]), and detect_text_regions already sorts regions
+    # top-to-bottom / left-to-right before that - so box_id ascending is
+    # already a decent proxy for reading order, same as sorting by
+    # ycenter would give (which is what experiment2.py's print_report
+    # does explicitly - box_id order gets us there without needing to
+    # carry y-coordinates through the skeleton dicts).
+    category_ids: list = []                  # box_id, in reading order
+    category_payload: dict = {}              # box_id -> header item dict
+    grouped_items: dict = {}                 # category box_id -> [(sort_key, item)]
+    unassigned_items: list = []              # [(sort_key, item)] - no category above them
     orphan_prices = []
-
-    # Category headers
-    for entry in skeleton:
-        if entry["role"] != "category":
-            continue
-        rec = recognized_by_box_id.get(entry["box_id"])
-        items.append({
-            "name": rec["text"] if rec else "",
-            "name_confidence": rec["confidence"] if rec else 0.0,
-            "price_value": None, "price_raw": None, "price_ambiguous": False,
-            "price_confidence": None, "currency": None, "currency_source": None,
-            "is_category_header": True,
-        })
-
-    # Paired name<->price items
     seen_pairs = set()
+
     for entry in skeleton:
-        if entry["role"] not in ("item_name", "item_price"):
-            continue
-        pair_key = tuple(sorted((entry["box_id"], entry["pair_id"])))
-        if pair_key in seen_pairs:
-            continue
-        seen_pairs.add(pair_key)
+        role = entry["role"]
 
-        if entry["role"] == "item_name":
-            name_id, price_id = entry["box_id"], entry["pair_id"]
-        else:
-            name_id, price_id = entry["pair_id"], entry["box_id"]
-        name_rec = recognized_by_box_id.get(name_id)
-        price_rec = recognized_by_box_id.get(price_id)
+        if role == "category":
+            box_id = entry["box_id"]
+            rec = recognized_by_box_id.get(box_id)
+            category_ids.append(box_id)
+            category_payload[box_id] = {
+                "name": rec["text"] if rec else "",
+                "name_confidence": rec["confidence"] if rec else 0.0,
+                "price_value": None, "price_raw": None, "price_ambiguous": False,
+                "price_confidence": None, "currency": None, "currency_source": None,
+                "is_category_header": True,
+            }
+            grouped_items.setdefault(box_id, [])
 
-        items.append({
-            "name": name_rec["text"] if name_rec else "",
-            "name_confidence": name_rec["confidence"] if name_rec else 0.0,
-            "price_value": price_rec.get("price_value") if price_rec else None,
-            "price_raw": price_rec.get("price_raw") if price_rec else None,
-            "price_ambiguous": price_rec.get("price_ambiguous", False) if price_rec else False,
-            "price_confidence": price_rec["confidence"] if price_rec else None,
-            "currency": price_rec.get("currency") if price_rec else None,
-            "currency_source": price_rec.get("currency_source") if price_rec else None,
-            "is_category_header": False,
-        })
+        elif role in ("item_name", "item_price"):
+            pair_key = tuple(sorted((entry["box_id"], entry["pair_id"])))
+            if pair_key in seen_pairs:
+                continue
+            seen_pairs.add(pair_key)
 
-    # Unresolved boxes: geometry found no pairing partner, so resolve using
-    # recognized text now, same way the old pairing did for orphans.
-    for entry in skeleton:
-        if entry["role"] != "unresolved":
-            continue
-        rec = recognized_by_box_id.get(entry["box_id"])
-        if rec is None:
-            continue
-        if rec.get("price_value") is not None:
-            orphan_prices.append({
-                "text": rec["text"], "confidence": rec["confidence"],
-                "price_value": rec.get("price_value"), "price_raw": rec.get("price_raw"),
-            })
-        else:
-            items.append({
+            if role == "item_name":
+                name_id, price_id = entry["box_id"], entry["pair_id"]
+            else:
+                name_id, price_id = entry["pair_id"], entry["box_id"]
+            name_rec = recognized_by_box_id.get(name_id)
+            price_rec = recognized_by_box_id.get(price_id)
+
+            item = {
+                "name": name_rec["text"] if name_rec else "",
+                "name_confidence": name_rec["confidence"] if name_rec else 0.0,
+                "price_value": price_rec.get("price_value") if price_rec else None,
+                "price_raw": price_rec.get("price_raw") if price_rec else None,
+                "price_ambiguous": price_rec.get("price_ambiguous", False) if price_rec else False,
+                "price_confidence": price_rec["confidence"] if price_rec else None,
+                "currency": price_rec.get("currency") if price_rec else None,
+                "currency_source": price_rec.get("currency_source") if price_rec else None,
+                "is_category_header": False,
+            }
+            sort_key = min(name_id, price_id)
+            group_id = entry["group_id"]
+            if group_id is not None:
+                grouped_items.setdefault(group_id, []).append((sort_key, item))
+            else:
+                unassigned_items.append((sort_key, item))
+
+        elif role == "unresolved":
+            # geometry found no pairing partner - resolve using recognized
+            # text now, same way the old pairing did for orphans.
+            box_id = entry["box_id"]
+            rec = recognized_by_box_id.get(box_id)
+            if rec is None:
+                continue
+            if rec.get("price_value") is not None:
+                orphan_prices.append({
+                    "text": rec["text"], "confidence": rec["confidence"],
+                    "price_value": rec.get("price_value"), "price_raw": rec.get("price_raw"),
+                })
+                continue
+            item = {
                 "name": rec["text"], "name_confidence": rec["confidence"],
                 "price_value": None, "price_raw": None, "price_ambiguous": False,
                 "price_confidence": None, "currency": None, "currency_source": None,
                 "is_category_header": False,
                 "needs_review": True,  # geometry never found a price pair for this item
-            })
+            }
+            group_id = entry["group_id"]
+            if group_id is not None:
+                grouped_items.setdefault(group_id, []).append((box_id, item))
+            else:
+                unassigned_items.append((box_id, item))
+
+    # Assemble final ordered list: each category header immediately
+    # followed by its own members (in reading order), mirroring
+    # experiment2.py's terminal report. Items that never landed under any
+    # category go last, as their own block - same convention
+    # print_report used for "No category / unassigned".
+    items = []
+    for cat_id in category_ids:
+        items.append(category_payload[cat_id])
+        for _, item in sorted(grouped_items.get(cat_id, []), key=lambda t: t[0]):
+            items.append(item)
+    for _, item in sorted(unassigned_items, key=lambda t: t[0]):
+        items.append(item)
 
     total_regions = len(skeleton)
     items_with_prices = sum(1 for i in items if i["price_value"] is not None)
@@ -442,7 +379,12 @@ def interactive_detection(preprocessed_image: "np.ndarray", output_dir: str = ".
     cfg = get_config().detection
     strategies = cfg.strategies
     current_strategy = "default"
-    
+
+    # build_skeleton's noise-shape check needs the source image's area -
+    # computed once here since preprocessed_image doesn't change across
+    # strategy retries.
+    image_area = float(preprocessed_image.shape[0] * preprocessed_image.shape[1])
+
     while True:
         # Apply current strategy params
         strategy_params = strategies[current_strategy]
@@ -464,12 +406,11 @@ def interactive_detection(preprocessed_image: "np.ndarray", output_dir: str = ".
             continue
         
         # Build skeleton for classification
-        skeleton = build_skeleton(regions)
+        skeleton = build_skeleton(regions, image_area)
         
         # Generate visualization
-        vis_image = draw_regions_debug(preprocessed_image, regions, skeleton)
         vis_path = os.path.join(output_dir, "detection_preview.png")
-        cv2.imwrite(vis_path, vis_image)
+        _write_pairing_debug_image(preprocessed_image, regions, skeleton, vis_path)
         
         # Show stats
         stats = {
@@ -537,7 +478,11 @@ def _prompt_strategy_choice(strategies: dict, current: str) -> str:
         return current
 
 
-def run_pipeline(image_path: str, default_currency: str = None) -> dict:
+def run_pipeline(
+    image_path: str,
+    default_currency: str = None,
+    debug_output_path: str = "pairing_debug.png",
+) -> dict:
     """Run the full pipeline on a menu photo: preprocess -> detect ->
     recognize -> postprocess -> assemble into menu items.
     
@@ -547,7 +492,18 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
     Memory optimized: clears intermediate results after each stage to
     reduce peak memory usage.
 
-    Returns the dict from assemble_menu(), or an error dict with:
+    Args:
+        image_path: path to the menu photo.
+        default_currency: currency code to assume when none is detected.
+        debug_output_path: where to save the pairing debug image (boxes
+            color-coded noise/category/item/unresolved, with lines drawn
+            between paired name/price boxes). Written right after the
+            skeleton is built, before the source image is freed. Pass
+            None or "" to skip generating it.
+
+    Returns the dict from assemble_from_skeleton(), plus
+    "debug_image_path" (the path written to, or None if skipped), or an
+    error dict with:
         "error": error type (validation, preprocessing, detection, etc.)
         "message": human-readable error message
         "items": empty list (for consistent response structure)
@@ -580,7 +536,13 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
         regions = detect_text_regions(prep["image"])
         logger.debug("Detection complete", extra={"region_count": len(regions)})
         log_memory_usage("after_detection")
-        
+
+        # build_skeleton's noise-shape check needs the source image's area,
+        # and (if requested) the debug image render needs the array itself
+        # a little longer - hold both before prep gets freed below.
+        image_area = float(prep["image"].shape[0] * prep["image"].shape[1])
+        debug_image_source = prep["image"] if debug_output_path else None
+
         # Memory optimization: clear preprocessing results, only keep regions
         del prep
         log_memory_usage("after_cleanup_prep")
@@ -590,7 +552,8 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
             return {
                 "items": [],
                 "orphan_prices": [],
-                "warning": "No text detected in image"
+                "warning": "No text detected in image",
+                "debug_image_path": None,
             }
     except DetectionError as e:
         logger.error("Detection stage failed", exc_info=True)
@@ -603,8 +566,15 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
     # noise boxes (illustrations, decorative headers) are identified now,
     # before the expensive recognition step ever has to look at them.
     try:
-        skeleton = build_skeleton(regions)
+        skeleton = build_skeleton(regions, image_area)
         logger.debug("Skeleton built", extra={"box_count": len(skeleton)})
+
+        if debug_output_path:
+            _write_pairing_debug_image(debug_image_source, regions, skeleton, debug_output_path)
+
+        # debug_image_source is only needed for the render above - drop it now,
+        # same memory-optimization intent as the prep cleanup a moment ago.
+        del debug_image_source
     except Exception as e:
         logger.error("Skeleton stage failed", exc_info=True)
         raise PipelineError(f"Skeleton building failed: {e}") from e
@@ -653,6 +623,7 @@ def run_pipeline(image_path: str, default_currency: str = None) -> dict:
     # Stage 6: Assembly - join skeleton (structure) with recognized text/price
     try:
         menu = assemble_from_skeleton(skeleton, recognized_by_box_id, default_currency=validated_currency)
+        menu["debug_image_path"] = debug_output_path if debug_output_path else None
         logger.info("Pipeline complete", extra={
             "items": len(menu["items"]),
             "orphans": len(menu["orphan_prices"])
@@ -681,10 +652,23 @@ if __name__ == "__main__":
     parser.add_argument("currency", nargs='?', default=None, help="Currency code (TND, EUR)")
     parser.add_argument("--interactive", "-i", action="store_true", 
                        help="Interactive mode: review detection before continuing")
+    parser.add_argument("--debug-out", default=None,
+                       help="Path to write the pairing debug image (boxes color-coded "
+                            "noise/category/item/unresolved, with name<->price pairing lines). "
+                            "Defaults to '<image_stem>_pairing_debug.png'.")
+    parser.add_argument("--no-debug-image", action="store_true",
+                       help="Skip generating the pairing debug image entirely.")
     args = parser.parse_args()
 
     image_path = args.image_path
     default_currency = args.currency or get_config().postprocessing.default_currency
+
+    if args.no_debug_image:
+        debug_output_path = None
+    elif args.debug_out:
+        debug_output_path = args.debug_out
+    else:
+        debug_output_path = f"{os.path.splitext(os.path.basename(image_path))[0]}_pairing_debug.png"
     
     logger.info("Pipeline started", extra={"image_path": image_path, "currency": default_currency, "interactive": args.interactive})
 
@@ -696,7 +680,9 @@ if __name__ == "__main__":
             validated_currency = validate_currency(default_currency)
             prep = preprocess_image(str(validated_path))
             
-            # Interactive detection with retry
+            # Interactive detection with retry (handles image_area internally,
+            # and already writes a pairing debug image - "detection_preview.png" -
+            # on every strategy attempt, not just the accepted one)
             regions, skeleton = interactive_detection(prep["image"])
             
             if not regions:
@@ -710,9 +696,10 @@ if __name__ == "__main__":
             processed = process_recognition_results(recognized, default_currency=validated_currency)
             recognized_by_box_id = dict(zip(survivor_ids, processed))
             menu = assemble_from_skeleton(skeleton, recognized_by_box_id, default_currency=validated_currency)
+            menu["debug_image_path"] = os.path.join(".", "detection_preview.png")
         else:
             # Non-interactive mode: use standard run_pipeline
-            menu = run_pipeline(image_path, default_currency=default_currency)
+            menu = run_pipeline(image_path, default_currency=default_currency, debug_output_path=debug_output_path)
         
         logger.info("Pipeline completed successfully", extra={
             "item_count": len(menu["items"]),
@@ -734,6 +721,9 @@ if __name__ == "__main__":
             print(f"\n{'='*50}\nUNMATCHED PRICES (need manual review)\n{'='*50}")
             for orphan in menu["orphan_prices"]:
                 print(f"  text={orphan['text']!r}  price={orphan['price_value']}")
+
+        if menu.get("debug_image_path"):
+            print(f"\nPairing debug image: {menu['debug_image_path']}")
         
         # Display quality metrics
         metrics = menu.get("quality_metrics", {})

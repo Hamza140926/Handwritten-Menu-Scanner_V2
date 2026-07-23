@@ -238,7 +238,8 @@ def draw_regions_debug(image: np.ndarray, regions: list, skeleton: list = None) 
         - Orange: category headers
         - Gray: noise (excluded from recognition)
         - Red: unresolved (no pair found)
-        - Blue→Orange lines: pairing connections (color shift = tilt angle)
+        - Blue lines: pairing connections, name's right edge -> price's
+          left edge
     """
     debug_image = image.copy()
     
@@ -251,16 +252,20 @@ def draw_regions_debug(image: np.ndarray, regions: list, skeleton: list = None) 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
     else:
         # Enhanced mode: color-code by role and draw pairing lines
-        # First pass: draw pairing lines (background layer)
+        # First pass: draw pairing lines (background layer). Each pair
+        # produces two skeleton entries pointing at each other (one
+        # "item_name", one "item_price") - only draw from the
+        # "item_name" side, or the pair gets drawn twice: once correctly
+        # (name's right edge -> price's left edge) and once backwards
+        # (price's right edge -> name's left edge), which is a visibly
+        # different, wrong line, not just a redundant redraw.
         for entry in skeleton:
-            if entry["role"] not in ("item_name", "item_price") or entry["pair_id"] is None:
+            if entry["role"] != "item_name" or entry["pair_id"] is None:
                 continue
-            # Draw line from this box to its pair
-            box1 = regions[entry["box_id"]]["box"]
-            box2 = regions[entry["pair_id"]]["box"]
-            x1, y1 = int(box1[:, 0].max()), int((box1[:, 1].min() + box1[:, 1].max()) / 2)
-            x2, y2 = int(box2[:, 0].min()), int((box2[:, 1].min() + box2[:, 1].max()) / 2)
-            # Simple blue line (can enhance with tilt-based color later)
+            name_box = regions[entry["box_id"]]["box"]
+            price_box = regions[entry["pair_id"]]["box"]
+            x1, y1 = int(name_box[:, 0].max()), int((name_box[:, 1].min() + name_box[:, 1].max()) / 2)
+            x2, y2 = int(price_box[:, 0].min()), int((price_box[:, 1].min() + price_box[:, 1].max()) / 2)
             cv2.line(debug_image, (x1, y1), (x2, y2), (255, 100, 0), 2)
         
         # Second pass: draw boxes color-coded by role
