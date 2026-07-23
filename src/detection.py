@@ -9,10 +9,24 @@ recognition here. This handles free-form/messy layouts well since it
 doesn't assume a clean row/column structure; it finds arbitrary text
 regions wherever they are on the page.
 
-Usage:
-    from detection import detect_text_regions
+IMPORTANT: detect_text_regions() should be called on the resized-but-not
+deskewed image (preprocessing.preprocess_image()'s "resized_raw"), not the
+fully preprocessed one. Deskew rotation shifts box coordinates enough to
+flip borderline classification/pairing decisions downstream in pairing.py
+(confirmed empirically on real menu photos). If you also want the
+denoised/deskewed image's cleaner pixels for recognition, use
+recrop_for_recognition() below to re-crop the SAME boxes from that image
+without re-running detection or changing the geometry the skeleton was
+built from.
 
-    regions = detect_text_regions(image)
+Usage:
+    from detection import detect_text_regions, recrop_for_recognition
+
+    regions = detect_text_regions(resized_raw_image)
+    # ... build skeleton from `regions` here ...
+    recognition_regions = recrop_for_recognition(
+        regions, deskewed_image, rotation_matrix
+    )
     # regions -> list of dicts, each with:
     #   "crop":  cropped BGR image of just that text region
     #   "box":   the 4 corner points of the region in the original image
@@ -144,10 +158,14 @@ def _crop_box(image: np.ndarray, box: np.ndarray, padding: int = 4) -> np.ndarra
 
 
 def detect_text_regions(image: np.ndarray, min_box_area: int = None) -> list:
-    """Detect text regions in a preprocessed menu image.
+    """Detect text regions in an image.
+
+    IMPORTANT: pass preprocessing.preprocess_image()'s "resized_raw" here,
+    not "image" (the deskewed/denoised one) - see module docstring for why.
 
     Args:
-        image: preprocessed BGR image (e.g. from preprocessing.preprocess_image)
+        image: BGR image, resized but NOT deskewed/denoised (e.g.
+            preprocess_image()["resized_raw"])
         min_box_area: discard detected boxes smaller than this (filters out
             noise/speckle false positives)
 
@@ -208,11 +226,6 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = None) -> list:
         
         logger.info("Text detection complete", extra={"regions_found": len(regions), "filtered_out": len(raw_boxes) - len(regions)})
 
-        # Memory optimization: each region's "crop" is a full numpy array
-        # that will be held in memory until recognition completes. The "box"
-        # coordinates are kept for debugging but won't be used downstream.
-        # Consider removing "box" if memory is extremely tight.
-        
         return regions
     
     except DetectionError:
@@ -222,12 +235,64 @@ def detect_text_regions(image: np.ndarray, min_box_area: int = None) -> list:
         raise DetectionError(f"Detection pipeline failed: {e}") from e
 
 
+def recrop_for_recognition(
+    regions: list, recognition_image: np.ndarray, rotation_matrix: np.ndarray = None
+) -> list:
+    """Re-crop each detected region's "crop" from a differently-processed
+    version of the image (e.g. denoised + deskewed), for use in
+    recognition, WITHOUT touching the original "box" coordinates that the
+    skeleton (pairing.build_skeleton) was built from.
+
+    Why this exists: detection must run on geometry-stable pixels
+    (preprocess_image()["resized_raw"]) so pairing.py's pixel-based
+    thresholds behave consistently. But recognition benefits from the
+    denoised/deskewed/contrast-normalized image. This function bridges
+    the two: it re-projects each box's corner points through the same
+    rotation used to produce `recognition_image` (if any), then re-crops
+    from there - so the crop content matches the cleaner image while the
+    "box" field used for geometry stays exactly as detected.
+
+    Args:
+        regions: output of detect_text_regions() (run on resized_raw)
+        recognition_image: the fully preprocessed image, e.g.
+            preprocess_image()["image"] (denoised + deskewed)
+        rotation_matrix: preprocess_image()["rotation_matrix"] - the 2x3
+            affine matrix used to deskew `recognition_image` relative to
+            resized_raw. Pass None if no rotation was applied (angle was
+            negligible), in which case box coordinates are assumed to
+            already line up (only pointwise ops - denoise/CLAHE - were
+            applied).
+
+    Returns:
+        A new list of region dicts (same length/order as `regions`),
+        each with an updated "crop" pointing at the recognition image.
+        "box", "y", "x" are left untouched so callers can still match
+        these back to the original skeleton by list position / box_id.
+    """
+    updated = []
+    for region in regions:
+        box = region["box"]
+        if rotation_matrix is not None:
+            pts = np.array([box], dtype="float32")  # shape (1, 4, 2) for cv2.transform
+            transformed_box = cv2.transform(pts, rotation_matrix)[0]
+        else:
+            transformed_box = box
+
+        new_region = dict(region)
+        new_region["crop"] = _crop_box(recognition_image, transformed_box)
+        updated.append(new_region)
+
+    return updated
+
+
 def draw_regions_debug(image: np.ndarray, regions: list, skeleton: list = None) -> np.ndarray:
     """Draw detected region boxes on a copy of the image with optional
     skeleton classification overlay (categories, items, noise, pairings).
     
     Args:
-        image: source image (BGR)
+        image: source image (BGR) - should be the SAME image regions'
+            "box" coordinates were detected on (i.e. resized_raw), or the
+            drawn boxes will be misaligned.
         regions: list of region dicts from detect_text_regions
         skeleton: optional skeleton from pairing.build_skeleton() - if
                   provided, boxes are color-coded by role and pairing
@@ -304,7 +369,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     result = preprocess_image(sys.argv[1])
-    image = result["image"]
+    image = result["resized_raw"]
 
     regions = detect_text_regions(image)
 

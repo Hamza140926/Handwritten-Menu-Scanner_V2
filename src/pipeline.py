@@ -20,10 +20,33 @@ pairing algorithm (shape-based noise filtering, 3-signal category vote,
 Hungarian-algorithm name<->price pairing). This file's job is just to
 wire that skeleton together with recognized text/price and produce the
 final menu structure + quality metrics.
+
+DETECTION-VS-PREPROCESSING SPLIT (important, read this before touching
+Stage 2/3 below):
+    Detection and skeleton-building run on preprocess_image()'s
+    "resized_raw" - resized only, NOT denoised/deskewed. This was a
+    deliberate fix: deskew rotation shifts every box's coordinates by
+    enough to flip borderline classification/pairing votes in
+    pairing.py, whose thresholds (COLUMN_X_TOLERANCE, angle checks,
+    row-gap ratios) are pixel-based and were tuned against un-rotated
+    geometry. Running detection on the deskewed image was silently
+    corrupting skeleton results (categories misdetected, items dropping
+    to "unresolved") even though detection itself is deterministic -
+    confirmed by diffing skeleton roles box-by-box between the two
+    inputs on a real menu photo.
+
+    Recognition still benefits from the full preprocessing (denoise,
+    deskew, CLAHE), since handwriting legibility is a pointwise/rotation
+    concern, not a cross-box-geometry one. So after the skeleton is
+    built from resized_raw boxes, detection.recrop_for_recognition() is
+    used to re-crop the SAME boxes (by re-projecting their corners
+    through the deskew rotation matrix) from the fully preprocessed
+    image, before recognition runs on them. The skeleton's box_id
+    indexing is untouched by this - only the "crop" pixels change.
 """
 
 from preprocessing import preprocess_image
-from detection import detect_text_regions, draw_regions_debug
+from detection import detect_text_regions, draw_regions_debug, recrop_for_recognition
 from recognition import recognize_regions
 from postprocess import process_recognition_results
 from pairing import build_skeleton
@@ -92,6 +115,10 @@ def _write_pairing_debug_image(image, regions: list, skeleton: list, output_path
     + pairing lines) over the source image and save it. Thin wrapper
     around detection.draw_regions_debug so run_pipeline and
     interactive_detection share one implementation.
+
+    `image` should be the SAME image `regions` was detected on
+    (resized_raw), since "box" coordinates are drawn directly against it -
+    passing the deskewed image here would misalign the overlay.
 
     Returns output_path for convenience (also logged).
     """
@@ -362,7 +389,7 @@ def assemble_from_skeleton(
     return {"items": items, "orphan_prices": orphan_prices, "quality_metrics": quality_metrics}
 
 
-def interactive_detection(preprocessed_image: "np.ndarray", output_dir: str = ".") -> tuple:
+def interactive_detection(prep: dict, output_dir: str = ".") -> tuple:
     """
     Run detection with interactive review and retry capability.
     
@@ -370,29 +397,39 @@ def interactive_detection(preprocessed_image: "np.ndarray", output_dir: str = ".
     then can choose to continue or retry with different detection params.
     
     Args:
-        preprocessed_image: BGR image from preprocessing
+        prep: the dict returned by preprocessing.preprocess_image() - needs
+            "resized_raw" (for detection/skeleton) and "image" +
+            "rotation_matrix" (for recognition re-cropping).
         output_dir: where to save visualization images
     
     Returns:
-        (regions, skeleton) tuple for the accepted detection result
+        (regions, skeleton) tuple for the accepted detection result.
+        `regions`' "crop" fields point at the fully preprocessed image
+        (deskewed/denoised), ready for recognition - "box"/"y"/"x" stay
+        in resized_raw coordinate space, matching what the skeleton was
+        built from.
     """
     cfg = get_config().detection
     strategies = cfg.strategies
     current_strategy = "default"
 
+    detection_image = prep["resized_raw"]
+    recognition_image = prep["image"]
+    rotation_matrix = prep["rotation_matrix"]
+
     # build_skeleton's noise-shape check needs the source image's area -
-    # computed once here since preprocessed_image doesn't change across
+    # computed once here since detection_image doesn't change across
     # strategy retries.
-    image_area = float(preprocessed_image.shape[0] * preprocessed_image.shape[1])
+    image_area = float(detection_image.shape[0] * detection_image.shape[1])
 
     while True:
         # Apply current strategy params
         strategy_params = strategies[current_strategy]
         logger.info(f"Running detection with strategy: {current_strategy}", extra=strategy_params)
         
-        # Run detection
+        # Run detection on the geometry-stable image
         regions = detect_text_regions(
-            preprocessed_image,
+            detection_image,
             min_box_area=strategy_params["min_box_area"]
         )
         
@@ -405,12 +442,13 @@ def interactive_detection(preprocessed_image: "np.ndarray", output_dir: str = ".
             current_strategy = _prompt_strategy_choice(strategies, current_strategy)
             continue
         
-        # Build skeleton for classification
+        # Build skeleton for classification (geometry only, on detection_image boxes)
         skeleton = build_skeleton(regions, image_area)
         
-        # Generate visualization
+        # Generate visualization - drawn against detection_image since that's
+        # what "box" coordinates are in.
         vis_path = os.path.join(output_dir, "detection_preview.png")
-        _write_pairing_debug_image(preprocessed_image, regions, skeleton, vis_path)
+        _write_pairing_debug_image(detection_image, regions, skeleton, vis_path)
         
         # Show stats
         stats = {
@@ -447,14 +485,23 @@ def interactive_detection(preprocessed_image: "np.ndarray", output_dir: str = ".
         choice = input("\nYour choice: ").strip().lower()
         
         if choice == 'c':
-            return regions, skeleton
+            # Structure is locked in - now swap crops to the cleaner
+            # preprocessed image for recognition, without touching the
+            # geometry the skeleton was built from.
+            recognition_regions = recrop_for_recognition(
+                regions, recognition_image, rotation_matrix
+            )
+            return recognition_regions, skeleton
         elif choice == 'q':
             raise KeyboardInterrupt("User quit during detection review")
         elif choice == 'r':
             current_strategy = _prompt_strategy_choice(strategies, current_strategy)
         else:
             print("Invalid choice, assuming 'continue'")
-            return regions, skeleton
+            recognition_regions = recrop_for_recognition(
+                regions, recognition_image, rotation_matrix
+            )
+            return recognition_regions, skeleton
 
 
 def _prompt_strategy_choice(strategies: dict, current: str) -> str:
@@ -531,19 +578,25 @@ def run_pipeline(
         logger.error("Preprocessing stage failed", exc_info=True)
         raise
     
-    # Stage 2: Detection
+    # Stage 2: Detection - run on resized_raw (NOT deskewed/denoised), so
+    # box geometry stays stable for the pixel-threshold-based skeleton
+    # stage. See module docstring for why this split exists.
     try:
-        regions = detect_text_regions(prep["image"])
+        detection_image = prep["resized_raw"]
+        regions = detect_text_regions(detection_image)
         logger.debug("Detection complete", extra={"region_count": len(regions)})
         log_memory_usage("after_detection")
 
         # build_skeleton's noise-shape check needs the source image's area,
         # and (if requested) the debug image render needs the array itself
         # a little longer - hold both before prep gets freed below.
-        image_area = float(prep["image"].shape[0] * prep["image"].shape[1])
-        debug_image_source = prep["image"] if debug_output_path else None
+        image_area = float(detection_image.shape[0] * detection_image.shape[1])
+        debug_image_source = detection_image if debug_output_path else None
 
-        # Memory optimization: clear preprocessing results, only keep regions
+        # Hang on to the recognition-quality image + rotation matrix for
+        # Stage 4's recrop, then drop the rest of prep.
+        recognition_image = prep["image"]
+        rotation_matrix = prep["rotation_matrix"]
         del prep
         log_memory_usage("after_cleanup_prep")
         
@@ -562,9 +615,10 @@ def run_pipeline(
     # Stage 3: Skeleton (geometry-only classify + pair, BEFORE recognition)
     # regions[i] corresponds to skeleton[i] - "box_id" == index into regions.
     # Structure (category/item/pairing) is decided here from box geometry
-    # alone, so it can't be corrupted by a bad OCR read downstream, and
-    # noise boxes (illustrations, decorative headers) are identified now,
-    # before the expensive recognition step ever has to look at them.
+    # alone (on the geometry-stable detection_image boxes), so it can't be
+    # corrupted by a bad OCR read downstream, and noise boxes (illustrations,
+    # decorative headers) are identified now, before the expensive
+    # recognition step ever has to look at them.
     try:
         skeleton = build_skeleton(regions, image_area)
         logger.debug("Skeleton built", extra={"box_count": len(skeleton)})
@@ -572,17 +626,22 @@ def run_pipeline(
         if debug_output_path:
             _write_pairing_debug_image(debug_image_source, regions, skeleton, debug_output_path)
 
-        # debug_image_source is only needed for the render above - drop it now,
-        # same memory-optimization intent as the prep cleanup a moment ago.
         del debug_image_source
     except Exception as e:
         logger.error("Skeleton stage failed", exc_info=True)
         raise PipelineError(f"Skeleton building failed: {e}") from e
 
-    # Stage 4: Recognition - only on boxes that survived noise filtering
+    # Stage 4: Recognition - only on boxes that survived noise filtering.
+    # Re-crop survivors from the fully preprocessed (denoised/deskewed)
+    # image now that structure is locked in - recognition benefits from
+    # the cleaner pixels, and this can't disturb the skeleton since
+    # box_id/role/pair_id/group_id were already decided in Stage 3.
     try:
         survivor_ids = [s["box_id"] for s in skeleton if s["role"] != "noise"]
         survivor_regions = [regions[i] for i in survivor_ids]
+        survivor_regions = recrop_for_recognition(
+            survivor_regions, recognition_image, rotation_matrix
+        )
 
         recognized = recognize_regions(survivor_regions)
         logger.debug("Recognition complete", extra={
@@ -596,7 +655,7 @@ def run_pipeline(
         for region in regions:
             if "crop" in region:
                 del region["crop"]
-        del regions, survivor_regions
+        del regions, survivor_regions, recognition_image
         log_memory_usage("after_cleanup_crops")
 
     except RecognitionError as e:
@@ -681,15 +740,18 @@ if __name__ == "__main__":
             prep = preprocess_image(str(validated_path))
             
             # Interactive detection with retry (handles image_area internally,
-            # and already writes a pairing debug image - "detection_preview.png" -
-            # on every strategy attempt, not just the accepted one)
-            regions, skeleton = interactive_detection(prep["image"])
+            # runs detection on resized_raw for stable geometry, and already
+            # writes a pairing debug image - "detection_preview.png" - on
+            # every strategy attempt, not just the accepted one)
+            regions, skeleton = interactive_detection(prep)
             
             if not regions:
                 print("\nNo text detected. Exiting.")
                 sys.exit(0)
             
-            # Continue with rest of pipeline (recognition onwards)
+            # regions' crops already point at the preprocessed image
+            # (interactive_detection re-crops on accept) - continue with
+            # recognition onwards.
             survivor_ids = [s["box_id"] for s in skeleton if s["role"] != "noise"]
             survivor_regions = [regions[i] for i in survivor_ids]
             recognized = recognize_regions(survivor_regions)

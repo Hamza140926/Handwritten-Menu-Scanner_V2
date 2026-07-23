@@ -2,19 +2,49 @@
 Image preprocessing for handwritten menu scans.
 
 Handles arbitrary uploaded photos/scans (unknown lighting, skew, resolution)
-and prepares them for text detection:
+and prepares them for text detection AND recognition:
     - resize to a manageable working resolution
     - denoise
     - deskew (correct rotation)
     - normalize contrast / lighting (handles shadows, uneven lighting)
 
+IMPORTANT (fix for geometry-vs-preprocessing mismatch):
+    Detection/pairing (pairing.py) makes decisions from raw pixel geometry
+    (column x-positions, row gaps, angles) using tolerances tuned in
+    pixel units. Deskewing rotates every box's coordinates by a few
+    degrees, which is enough to flip borderline classification/pairing
+    votes on layouts that are already close to the vote threshold - this
+    was confirmed empirically (same image, same algorithm, different
+    results depending on whether detection ran before or after deskew).
+
+    Denoise and CLAHE contrast normalization are pointwise operations -
+    they don't move pixels around, so they don't affect box geometry.
+    Deskew is the only step here that's geometrically unsafe for the
+    detection/pairing stage.
+
+    So: `preprocess_image()` now returns BOTH
+        - "resized_raw": resized only (no denoise, no deskew, no CLAHE) -
+          feed this into detection.detect_text_regions() for a stable,
+          geometry-safe box set.
+        - "image": fully preprocessed (denoised + deskewed) - use this
+          for RECOGNITION crops only, via
+          detection.recrop_for_recognition(), which re-projects each
+          box's corners through "rotation_matrix" before cropping, so
+          the crop still lines up correctly on the rotated image.
+        - "rotation_matrix": the matrix used for deskew, or None if no
+          rotation was applied (angle below the negligible threshold).
+          Needed by recrop_for_recognition() to map box coordinates
+          from "resized_raw" space into "image" (deskewed) space.
+
 Usage:
     from preprocessing import preprocess_image
 
     result = preprocess_image("path/to/menu.jpg")
-    # result["image"] -> preprocessed OpenCV image (numpy array, BGR)
-    # result["gray"]  -> grayscale version, useful for detection models
-    # result["angle"] -> the deskew angle applied (degrees)
+    # result["image"]         -> fully preprocessed BGR image (denoised, deskewed)
+    # result["resized_raw"]   -> resized-only BGR image (use for detection)
+    # result["gray"]          -> preprocessed grayscale image (deskewed, contrast-normalized)
+    # result["angle"]         -> the deskew angle applied (degrees)
+    # result["rotation_matrix"] -> 2x3 rotation matrix used for deskew, or None
 """
 
 import cv2
@@ -62,13 +92,14 @@ def resize_max_dimension(image: np.ndarray, max_dim: int = None) -> np.ndarray:
 
 def denoise(image: np.ndarray) -> np.ndarray:
     """Light denoising — removes speckle/noise from photographed paper without
-    blurring handwriting strokes too much."""
+    blurring handwriting strokes too much. Pointwise: does not move pixels,
+    safe for anything that depends on box geometry."""
     cfg = get_config().preprocessing
     return cv2.fastNlMeansDenoisingColored(
-        image, None, 
-        h=cfg.denoise_strength, 
+        image, None,
+        h=cfg.denoise_strength,
         hColor=cfg.denoise_strength,
-        templateWindowSize=cfg.denoise_template_window, 
+        templateWindowSize=cfg.denoise_template_window,
         searchWindowSize=cfg.denoise_search_window
     )
 
@@ -139,14 +170,33 @@ def compute_skew_angle(gray: np.ndarray) -> float:
     return estimated_angle
 
 
-def deskew(image: np.ndarray, angle: float) -> np.ndarray:
-    """Rotate the image to correct the given skew angle."""
+def get_rotation_matrix(image_shape: tuple, angle: float) -> np.ndarray:
+    """Build the 2x3 affine rotation matrix used for deskewing an image
+    of the given shape by `angle` degrees around its center.
+
+    Exposed separately (not just buried inside deskew()) so callers that
+    need to re-project box coordinates - not full images - into the
+    deskewed frame can reuse the exact same transform. See
+    detection.recrop_for_recognition().
+    """
+    h, w = image_shape[:2]
+    center = (w // 2, h // 2)
+    return cv2.getRotationMatrix2D(center, angle, 1.0)
+
+
+def deskew(image: np.ndarray, angle: float, rotation_matrix: np.ndarray = None) -> np.ndarray:
+    """Rotate the image to correct the given skew angle.
+
+    Accepts a precomputed rotation_matrix so callers building both the
+    image and coordinate transforms (preprocess_image) only compute the
+    matrix once.
+    """
     if abs(angle) < 0.1:
         return image  # not worth rotating for negligible skew
 
     h, w = image.shape[:2]
-    center = (w // 2, h // 2)
-    rotation_matrix = cv2.getRotationMatrix2D(center, angle, 1.0)
+    if rotation_matrix is None:
+        rotation_matrix = get_rotation_matrix(image.shape, angle)
     rotated = cv2.warpAffine(
         image, rotation_matrix, (w, h),
         flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE
@@ -156,6 +206,7 @@ def deskew(image: np.ndarray, angle: float) -> np.ndarray:
 
 def normalize_contrast(gray: np.ndarray) -> np.ndarray:
     """Even out lighting/shadows using CLAHE (adaptive contrast).
+    Pointwise: does not move pixels, safe for box geometry.
 
     This matters a lot for phone/scanner photos of paper menus, which
     often have uneven lighting or shadows across the page.
@@ -169,31 +220,55 @@ def preprocess_image(path: str) -> dict:
     """Run the full preprocessing pipeline on an uploaded menu image.
 
     Returns a dict with:
-        "image": preprocessed BGR image (deskewed, denoised)
-        "gray":  preprocessed grayscale image (deskewed, contrast-normalized)
-        "angle": the skew angle that was corrected, in degrees
-        
+        "image":           fully preprocessed BGR image (denoised, deskewed).
+                            Use for RECOGNITION crops only (via
+                            detection.recrop_for_recognition), not for
+                            initial detection - see module docstring.
+        "resized_raw":      resized-only BGR image (no denoise/deskew/CLAHE).
+                            Feed this into detection.detect_text_regions()
+                            for geometry-stable box detection.
+        "gray":             preprocessed grayscale image (deskewed,
+                            contrast-normalized).
+        "angle":            the skew angle that was corrected, in degrees.
+        "rotation_matrix":  2x3 matrix used to deskew, or None if no
+                            rotation was applied (angle < 0.1 degrees).
+                            Needed to re-project box coordinates from
+                            "resized_raw" space into "image" space.
+
     Raises:
         PreprocessingError: If any preprocessing step fails
     """
     try:
         image = load_image(path)
-        image = resize_max_dimension(image)
+        resized_raw = resize_max_dimension(image)
 
         # Detect skew BEFORE denoising — denoising blurs away the fine edges
         # (especially thin handwriting strokes) that skew detection relies on.
         # Running detection after denoise was causing silent failures (angle
         # always 0.0) on real photos.
-        gray_for_skew = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray_for_skew = cv2.cvtColor(resized_raw, cv2.COLOR_BGR2GRAY)
         angle = compute_skew_angle(gray_for_skew)
 
-        image = denoise(image)
-        image = deskew(image, angle)
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        denoised = denoise(resized_raw)
+
+        if abs(angle) >= 0.1:
+            rotation_matrix = get_rotation_matrix(denoised.shape, angle)
+            deskewed = deskew(denoised, angle, rotation_matrix)
+        else:
+            rotation_matrix = None
+            deskewed = denoised
+
+        gray = cv2.cvtColor(deskewed, cv2.COLOR_BGR2GRAY)
         gray = normalize_contrast(gray)
 
-        return {"image": image, "gray": gray, "angle": angle}
-    
+        return {
+            "image": deskewed,
+            "resized_raw": resized_raw,
+            "gray": gray,
+            "angle": angle,
+            "rotation_matrix": rotation_matrix,
+        }
+
     except PreprocessingError:
         raise
     except Exception as e:
@@ -205,9 +280,9 @@ if __name__ == "__main__":
     import sys
 
     from logging_config import setup_logging
-    
+
     setup_logging(level="INFO")
-    
+
     if len(sys.argv) != 2:
         logger.error("Missing image path argument")
         print("Usage: python preprocessing.py <path_to_image>")
@@ -218,4 +293,7 @@ if __name__ == "__main__":
 
     cv2.imwrite("preprocessed_output.png", result["image"])
     cv2.imwrite("preprocessed_gray.png", result["gray"])
-    logger.info("Output saved", extra={"files": ["preprocessed_output.png", "preprocessed_gray.png"]})
+    cv2.imwrite("resized_raw_output.png", result["resized_raw"])
+    logger.info("Output saved", extra={
+        "files": ["preprocessed_output.png", "preprocessed_gray.png", "resized_raw_output.png"]
+    })
