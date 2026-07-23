@@ -1337,7 +1337,7 @@ print(cfg.to_dict())
 
 MIT License
 
-Copyright (c) 2024 Hamza Slimani
+Copyright (c) 2026 Hamza Slimani
 
 This project is released under the MIT License.
 
@@ -1387,7 +1387,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 **GitHub:** [@hamza030220](https://github.com/hamza030220)  
 **Project:** [Handwritten-Menu-Scanner_V2](https://github.com/hamza030220/Handwritten-Menu-Scanner_V2)
 
-For bug reports and feature requests, please use GitHub Issues.
 
 ---
 
