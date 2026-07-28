@@ -58,8 +58,11 @@ from exceptions import (
 from optimization import warmup_gpu, optimize_for_throughput, log_memory_usage
 from logging_config import get_logger
 from config import get_config
+from storage import upload_image
 import cv2
 import os
+import uuid
+from pathlib import Path
 
 logger = get_logger(__name__)
 
@@ -224,6 +227,80 @@ def pair_items(
     return items, orphan_prices
 
 
+def assemble_menu(processed_regions: list, max_y_distance: float = None) -> dict:
+    """Backward-compatible assembly helper for already-recognized regions.
+
+    Production uses the geometry-first ``assemble_from_skeleton`` path. This
+    adapter remains useful for unit tests, notebooks, and callers that only
+    have the legacy flat postprocessing output.
+    """
+    cfg = get_config().pipeline
+    if max_y_distance is None:
+        max_y_distance = cfg.max_y_distance
+
+    left, right = split_columns(processed_regions)
+    names, prices = identify_name_and_price_columns(left, right)
+    items, orphan_prices = pair_items(names, prices, max_y_distance)
+
+    total_regions = len(processed_regions)
+    category_headers = sum(1 for item in items if item["is_category_header"])
+    items_with_prices = sum(1 for item in items if item["price_value"] is not None)
+    non_header_items = len(items) - category_headers
+    pairing_success_rate = (
+        items_with_prices / non_header_items * 100
+        if non_header_items > 0
+        else 0.0
+    )
+    confidences = [region.get("confidence", 0.0) for region in processed_regions]
+    avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+    low_confidence_items = sum(
+        confidence < cfg.min_confidence_warning for confidence in confidences
+    )
+    ambiguous_prices = sum(
+        bool(region.get("price_ambiguous", False)) for region in processed_regions
+    )
+    orphan_count = len(orphan_prices)
+
+    warnings = []
+    if avg_confidence < cfg.min_confidence_warning:
+        warnings.append(
+            f"Low average confidence ({avg_confidence:.1%}). Image quality may be poor."
+        )
+    if pairing_success_rate < 50:
+        warnings.append(
+            f"Low pairing success rate ({pairing_success_rate:.1f}%). Menu layout may be unusual."
+        )
+    orphan_ratio = orphan_count / total_regions if total_regions else 0.0
+    if orphan_ratio > cfg.max_orphan_price_ratio:
+        warnings.append(
+            f"High orphan price ratio ({orphan_ratio:.1%}). Many prices couldn't be paired with items."
+        )
+    if low_confidence_items > total_regions * 0.3:
+        warnings.append(
+            f"{low_confidence_items} regions have low confidence. Manual review recommended."
+        )
+    if ambiguous_prices:
+        warnings.append(
+            f"{ambiguous_prices} prices have ambiguous numbers. Review recommended."
+        )
+
+    return {
+        "items": items,
+        "orphan_prices": orphan_prices,
+        "quality_metrics": {
+            "total_regions": total_regions,
+            "items_with_prices": items_with_prices,
+            "category_headers": category_headers,
+            "orphan_prices": orphan_count,
+            "pairing_success_rate": round(pairing_success_rate, 1),
+            "avg_confidence": round(avg_confidence, 3),
+            "low_confidence_items": low_confidence_items,
+            "ambiguous_prices": ambiguous_prices,
+            "warnings": warnings,
+        },
+    }
+
+
 def assemble_from_skeleton(
     skeleton: list, recognized_by_box_id: dict, default_currency: str = None
 ) -> dict:
@@ -272,6 +349,9 @@ def assemble_from_skeleton(
                 "price_value": None, "price_raw": None, "price_ambiguous": False,
                 "price_confidence": None, "currency": None, "currency_source": None,
                 "is_category_header": True,
+                "name_box_id": box_id,
+                "price_box_id": None,
+                "category_box_id": box_id,
             }
             grouped_items.setdefault(box_id, [])
 
@@ -298,6 +378,9 @@ def assemble_from_skeleton(
                 "currency": price_rec.get("currency") if price_rec else None,
                 "currency_source": price_rec.get("currency_source") if price_rec else None,
                 "is_category_header": False,
+                "name_box_id": name_id,
+                "price_box_id": price_id,
+                "category_box_id": entry["group_id"],
             }
             sort_key = min(name_id, price_id)
             group_id = entry["group_id"]
@@ -317,6 +400,7 @@ def assemble_from_skeleton(
                 orphan_prices.append({
                     "text": rec["text"], "confidence": rec["confidence"],
                     "price_value": rec.get("price_value"), "price_raw": rec.get("price_raw"),
+                    "box_id": box_id,
                 })
                 continue
             item = {
@@ -325,6 +409,9 @@ def assemble_from_skeleton(
                 "price_confidence": None, "currency": None, "currency_source": None,
                 "is_category_header": False,
                 "needs_review": True,  # geometry never found a price pair for this item
+                "name_box_id": box_id,
+                "price_box_id": None,
+                "category_box_id": entry["group_id"],
             }
             group_id = entry["group_id"]
             if group_id is not None:
@@ -559,6 +646,10 @@ def run_pipeline(
         ValidationError: If input validation fails (caller should handle)
         PipelineError: If any pipeline stage fails (caller should handle)
     """
+    scan_uuid = str(uuid.uuid4())
+    original_asset = None
+    crop_assets_by_box_id = {}
+
     if default_currency is None:
         default_currency = get_config().postprocessing.default_currency
     
@@ -567,6 +658,13 @@ def run_pipeline(
     # Validate inputs (raises ValidationError if invalid)
     validated_path = validate_image_input(image_path)
     validated_currency = validate_currency(default_currency)
+
+    # Store the validated original for later audit/reprocessing. Object
+    # storage is best-effort and must never make scanning unavailable.
+    original_asset = upload_image(
+        validated_path,
+        public_id=f"menus/{scan_uuid}/original",
+    )
     
     # Stage 1: Preprocessing
     try:
@@ -603,6 +701,12 @@ def run_pipeline(
         if not regions:
             logger.warning("No text regions detected")
             return {
+                "schema_version": 1,
+                "scan_uuid": scan_uuid,
+                "model_version": os.getenv("SCANTOSEE_MODEL_VERSION", "trocr-menu-v1"),
+                "original_image_url": (original_asset or {}).get("url"),
+                "original_asset": original_asset,
+                "regions": [],
                 "items": [],
                 "orphan_prices": [],
                 "warning": "No text detected in image",
@@ -622,6 +726,16 @@ def run_pipeline(
     try:
         skeleton = build_skeleton(regions, image_area)
         logger.debug("Skeleton built", extra={"box_count": len(skeleton)})
+
+        # Preserve geometry before the large region/crop structures are freed.
+        region_geometry_by_box_id = {}
+        for box_id, region in enumerate(regions):
+            box = region.get("box")
+            region_geometry_by_box_id[box_id] = {
+                "box": box.tolist() if hasattr(box, "tolist") else box,
+                "x": region.get("x"),
+                "y": region.get("y"),
+            }
 
         if debug_output_path:
             _write_pairing_debug_image(debug_image_source, regions, skeleton, debug_output_path)
@@ -649,6 +763,23 @@ def run_pipeline(
             "noise_skipped": len(regions) - len(survivor_regions),
         })
         log_memory_usage("after_recognition")
+
+        # Persist the exact deskewed crops that TrOCR saw. A paired menu item
+        # has separate name and price regions, so assets remain keyed by box_id.
+        for box_id, region in zip(survivor_ids, survivor_regions):
+            crop = region.get("crop")
+            if crop is None:
+                crop_assets_by_box_id[box_id] = None
+                continue
+            ok, encoded = cv2.imencode(".jpg", crop, [cv2.IMWRITE_JPEG_QUALITY, 92])
+            crop_assets_by_box_id[box_id] = (
+                upload_image(
+                    encoded.tobytes(),
+                    public_id=f"menus/{scan_uuid}/regions/{box_id:04d}",
+                )
+                if ok
+                else None
+            )
 
         # Memory optimization: crops no longer needed after recognition,
         # for survivors and noise boxes alike
@@ -682,6 +813,56 @@ def run_pipeline(
     # Stage 6: Assembly - join skeleton (structure) with recognized text/price
     try:
         menu = assemble_from_skeleton(skeleton, recognized_by_box_id, default_currency=validated_currency)
+        region_records = []
+        skeleton_by_box_id = {entry["box_id"]: entry for entry in skeleton}
+        for box_id in survivor_ids:
+            rec = recognized_by_box_id.get(box_id, {})
+            structure = skeleton_by_box_id[box_id]
+            geometry = region_geometry_by_box_id.get(box_id, {})
+            asset = crop_assets_by_box_id.get(box_id)
+            region_records.append({
+                "box_id": box_id,
+                "role": structure["role"],
+                "pair_box_id": structure["pair_id"],
+                "group_box_id": structure["group_id"],
+                "box": geometry.get("box"),
+                "x": geometry.get("x"),
+                "y": geometry.get("y"),
+                "raw_text": rec.get("text", ""),
+                "confidence": rec.get("confidence", 0.0),
+                "price_value": rec.get("price_value"),
+                "price_raw": rec.get("price_raw"),
+                "price_ambiguous": rec.get("price_ambiguous", False),
+                "currency": rec.get("currency"),
+                "currency_source": rec.get("currency_source"),
+                "crop_url": (asset or {}).get("url"),
+                "crop_asset": asset,
+            })
+
+        # Backward-compatible assembled response plus the region-level data
+        # required to train TrOCR (one crop -> one corrected transcription).
+        assets_by_id = {r["box_id"]: r for r in region_records}
+        for item in menu["items"]:
+            name_region = assets_by_id.get(item.get("name_box_id"))
+            price_region = assets_by_id.get(item.get("price_box_id"))
+            item["crop_url"] = name_region.get("crop_url") if name_region else None
+            item["price_crop_url"] = price_region.get("crop_url") if price_region else None
+
+        cfg = get_config()
+        model_checkpoint = Path(str(cfg.recognition.model_checkpoint))
+        menu.update({
+            "schema_version": 1,
+            "scan_uuid": scan_uuid,
+            "model_version": os.getenv("SCANTOSEE_MODEL_VERSION", model_checkpoint.name),
+            "inference_manifest": {
+                "recognition_model": model_checkpoint.name,
+                "detector_model": cfg.detection.model_name,
+                "pipeline_version": os.getenv("SCANTOSEE_PIPELINE_VERSION", "1"),
+            },
+            "original_image_url": (original_asset or {}).get("url"),
+            "original_asset": original_asset,
+            "regions": region_records,
+        })
         menu["debug_image_path"] = debug_output_path if debug_output_path else None
         logger.info("Pipeline complete", extra={
             "items": len(menu["items"]),
