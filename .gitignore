@@ -40,3 +40,8 @@ data/samples/*
 .idea/
 *.png
 *.svg
+
+# Local credentials
+.env
+.env.*
+!.env.example

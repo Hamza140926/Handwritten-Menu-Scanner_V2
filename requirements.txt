@@ -5,6 +5,7 @@
 
 # Deep Learning
 transformers==4.46.3
+huggingface-hub>=0.23.2,<1.0
 torch==2.13.0
 sentencepiece==0.2.2
 
@@ -22,3 +23,10 @@ scipy==1.14.1  # Hungarian algorithm for global optimization pairing
 
 # System Utilities
 psutil==5.9.5
+
+# HTTP API and training-data object storage
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.32,<1.0
+python-multipart>=0.0.17,<1.0
+cloudinary>=1.41,<2.0
+python-dotenv>=1.0,<2.0
