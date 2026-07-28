@@ -17,6 +17,10 @@ from typing import Optional
 import json
 
 
+# config.py lives in src/, so project root is one level up
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+MODELS_DIR = PROJECT_ROOT / "models"
+
 @dataclass
 class PreprocessingConfig:
     """Image preprocessing configuration."""
@@ -90,8 +94,9 @@ class RecognitionConfig:
     """Handwriting recognition configuration."""
     
     # Model selection
-    model_checkpoint: str = "models/trocr_menu_v1_digits_v3/checkpoints/checkpoint-765"
-    # Alternatives: 
+    model_checkpoint: str = str(MODELS_DIR / "trocr_menu_v1_digits_v3" / "checkpoints" / "checkpoint-765")    # Alternatives: "models/trocr_menu_v1_digits_v3/checkpoints/checkpoint-765"
+
+    # models/trocr_menu_v1_digits_v3/checkpoints/checkpoint-765
     # "microsoft/trocr-base-handwritten" (pretrained base model)
     # "microsoft/trocr-large-handwritten" (more accurate, slower)
     # "models/trocr_menu_v1/checkpoints/checkpoint-769" (epoch 1)
