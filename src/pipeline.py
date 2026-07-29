@@ -616,6 +616,7 @@ def run_pipeline(
     image_path: str,
     default_currency: str = None,
     debug_output_path: str = "pairing_debug.png",
+    scan_uuid: str = None,
 ) -> dict:
     """Run the full pipeline on a menu photo: preprocess -> detect ->
     recognize -> postprocess -> assemble into menu items.
@@ -646,7 +647,7 @@ def run_pipeline(
         ValidationError: If input validation fails (caller should handle)
         PipelineError: If any pipeline stage fails (caller should handle)
     """
-    scan_uuid = str(uuid.uuid4())
+    scan_uuid = scan_uuid or str(uuid.uuid4())
     original_asset = None
     crop_assets_by_box_id = {}
 
