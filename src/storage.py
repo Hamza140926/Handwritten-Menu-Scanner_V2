@@ -66,6 +66,22 @@ def _cloudinary_modules():
     return cloudinary.uploader
 
 
+def _cloudinary_api():
+    import cloudinary
+    import cloudinary.api
+
+    if os.getenv("CLOUDINARY_URL"):
+        cloudinary.config(secure=True)
+    else:
+        cloudinary.config(
+            cloud_name=os.environ["CLOUDINARY_CLOUD_NAME"],
+            api_key=os.environ["CLOUDINARY_API_KEY"],
+            api_secret=os.environ["CLOUDINARY_API_SECRET"],
+            secure=True,
+        )
+    return cloudinary.api
+
+
 def upload_image(
     source: str | Path | bytes | bytearray,
     public_id: str,
@@ -130,3 +146,25 @@ def upload_image(
 
     logger.error("Cloudinary upload abandoned", extra={"public_id": public_id})
     return None
+
+
+def delete_scan_assets(scan_uuid: str) -> bool:
+    """Best-effort removal of every Cloudinary image for one scan."""
+    if not scan_uuid or not is_configured():
+        return False
+
+    try:
+        api = _cloudinary_api()
+        api.delete_resources_by_prefix(
+            f"scantosee/menus/{scan_uuid}/",
+            resource_type="image",
+            invalidate=True,
+        )
+        logger.info("Cloudinary scan assets deleted", extra={"scan_uuid": scan_uuid})
+        return True
+    except Exception:
+        logger.exception(
+            "Cloudinary scan asset cleanup failed",
+            extra={"scan_uuid": scan_uuid},
+        )
+        return False

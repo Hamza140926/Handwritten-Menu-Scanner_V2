@@ -16,11 +16,13 @@ explicit here avoids relying on that implicit side effect.
 """
 
 import os
+import secrets
 import tempfile
+import uuid
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from pipeline import run_pipeline
@@ -32,6 +34,7 @@ from exceptions import (
 from optimization import warmup_gpu, optimize_for_throughput
 from config import get_config
 from logging_config import setup_logging, get_logger
+from storage import delete_scan_assets
 
 setup_logging(level="INFO")
 logger = get_logger(__name__)
@@ -70,6 +73,8 @@ async def scan_menu(
 
     suffix = os.path.splitext(image.filename or "")[1] or ".jpg"
     tmp_path = None
+    scan_uuid = str(uuid.uuid4())
+    keep_training_assets = False
     try:
         contents = await image.read()
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -85,7 +90,9 @@ async def scan_menu(
             tmp_path,
             default_currency=default_currency,
             debug_output_path=None,
+            scan_uuid=scan_uuid,
         )
+        keep_training_assets = bool(menu.get("regions"))
         return menu
 
     except ValidationError as e:
@@ -119,3 +126,23 @@ async def scan_menu(
     finally:
         if tmp_path and os.path.exists(tmp_path):
             os.remove(tmp_path)
+        if not keep_training_assets:
+            delete_scan_assets(scan_uuid)
+
+
+@app.delete("/training-assets/{scan_uuid}", include_in_schema=False)
+async def delete_training_assets(
+    scan_uuid: uuid.UUID,
+    x_cleanup_token: Optional[str] = Header(default=None),
+):
+    """Remove an unreviewed scan when its owning account is deleted."""
+    expected = os.getenv("OCR_CLEANUP_TOKEN", "")
+    if not expected:
+        raise HTTPException(status_code=503, detail="Asset cleanup is not configured.")
+    if not x_cleanup_token or not secrets.compare_digest(x_cleanup_token, expected):
+        raise HTTPException(status_code=403, detail="Forbidden.")
+
+    return {
+        "deleted": delete_scan_assets(str(scan_uuid)),
+        "scan_uuid": str(scan_uuid),
+    }

@@ -60,3 +60,37 @@ def test_upload_failure_is_non_fatal(monkeypatch):
 
     monkeypatch.setattr(storage, "_cloudinary_modules", lambda: FailingUploader)
     assert storage.upload_image(b"jpeg", "menus/scan/regions/0001", retries=1) is None
+
+
+def test_delete_scan_assets_uses_scoped_prefix(monkeypatch):
+    monkeypatch.setenv("CLOUDINARY_CLOUD_NAME", "test")
+    monkeypatch.setenv("CLOUDINARY_API_KEY", "key")
+    monkeypatch.setenv("CLOUDINARY_API_SECRET", "secret")
+    calls = []
+
+    class FakeApi:
+        @staticmethod
+        def delete_resources_by_prefix(prefix, **kwargs):
+            calls.append((prefix, kwargs))
+
+    monkeypatch.setattr(storage, "_cloudinary_api", lambda: FakeApi)
+
+    assert storage.delete_scan_assets("scan-123") is True
+    assert calls == [(
+        "scantosee/menus/scan-123/",
+        {"resource_type": "image", "invalidate": True},
+    )]
+
+
+def test_delete_scan_assets_failure_is_non_fatal(monkeypatch):
+    monkeypatch.setenv("CLOUDINARY_CLOUD_NAME", "test")
+    monkeypatch.setenv("CLOUDINARY_API_KEY", "key")
+    monkeypatch.setenv("CLOUDINARY_API_SECRET", "secret")
+
+    class FailingApi:
+        @staticmethod
+        def delete_resources_by_prefix(prefix, **kwargs):
+            raise OSError("network down")
+
+    monkeypatch.setattr(storage, "_cloudinary_api", lambda: FailingApi)
+    assert storage.delete_scan_assets("scan-123") is False
