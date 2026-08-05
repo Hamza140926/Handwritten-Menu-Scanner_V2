@@ -32,7 +32,8 @@ from exceptions import (
     RecognitionError, PostprocessingError, AssemblyError,
 )
 from optimization import warmup_gpu, optimize_for_throughput
-from config import get_config
+from config import MODELS_DIR, get_config, reset_config
+from recognition import reset_recognition_model
 from logging_config import setup_logging, get_logger
 from storage import delete_scan_assets
 
@@ -54,7 +55,24 @@ app = FastAPI(title="Scantosee OCR Pipeline", lifespan=lifespan)
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "ok", "model_checkpoint": get_config().recognition.model_checkpoint}
+
+
+@app.post("/admin/reload-model", include_in_schema=False)
+async def reload_model(x_cleanup_token: Optional[str] = Header(default=None)):
+    """Reload the locally promoted model. Accessible only through Symfony."""
+    expected = os.getenv("OCR_CLEANUP_TOKEN", "")
+    if not expected:
+        raise HTTPException(status_code=503, detail="Model administration is not configured.")
+    if not x_cleanup_token or not secrets.compare_digest(x_cleanup_token, expected):
+        raise HTTPException(status_code=403, detail="Forbidden.")
+    reset_recognition_model()
+    reset_config()
+    checkpoint = os.path.realpath(get_config().recognition.model_checkpoint)
+    models_root = os.path.realpath(str(MODELS_DIR))
+    if os.path.commonpath([checkpoint, models_root]) != models_root or not os.path.isdir(checkpoint):
+        raise HTTPException(status_code=422, detail="The promoted checkpoint is invalid.")
+    return {"status": "ready", "model_checkpoint": checkpoint}
 
 
 @app.post("/scan-menu")

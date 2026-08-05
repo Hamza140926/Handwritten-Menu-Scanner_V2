@@ -29,6 +29,8 @@ env/
 *.safetensors
 checkpoints/
 *-finetuned-*/
+models/admin-training/
+models/active_model.json
 
 # Data / images (adjust as needed once real data is added)
 data/samples/*

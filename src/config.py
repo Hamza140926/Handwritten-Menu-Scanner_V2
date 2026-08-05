@@ -11,7 +11,7 @@ Usage:
     max_dim = config.preprocessing.max_dimension
 """
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Optional
 import json
@@ -20,6 +20,25 @@ import json
 # config.py lives in src/, so project root is one level up
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = PROJECT_ROOT / "models"
+
+
+def active_model_checkpoint() -> str:
+    """Resolve the local production pointer without changing source code."""
+    import os
+
+    configured = os.getenv("SCANTOSEE_MODEL_CHECKPOINT")
+    if configured:
+        return configured
+    pointer = MODELS_DIR / "active_model.json"
+    if pointer.exists():
+        try:
+            candidate = Path(json.loads(pointer.read_text(encoding="utf-8"))["checkpoint"]).resolve()
+            candidate.relative_to(MODELS_DIR.resolve())
+            if candidate.is_dir():
+                return str(candidate)
+        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+            pass
+    return str(MODELS_DIR / "trocr_menu_v1_digits_v3" / "checkpoints" / "checkpoint-765")
 
 @dataclass
 class PreprocessingConfig:
@@ -94,7 +113,7 @@ class RecognitionConfig:
     """Handwriting recognition configuration."""
     
     # Model selection
-    model_checkpoint: str = str(MODELS_DIR / "trocr_menu_v1_digits_v3" / "checkpoints" / "checkpoint-765")    # Alternatives: "models/trocr_menu_v1_digits_v3/checkpoints/checkpoint-765"
+    model_checkpoint: str = field(default_factory=active_model_checkpoint)
 
     # models/trocr_menu_v1_digits_v3/checkpoints/checkpoint-765
     # "microsoft/trocr-base-handwritten" (pretrained base model)

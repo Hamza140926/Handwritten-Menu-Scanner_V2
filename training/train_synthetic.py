@@ -24,6 +24,7 @@ A note on VRAM (RTX 3050 4GB and similar small cards):
 """
 import argparse
 import csv
+import json
 from pathlib import Path
 
 import torch
@@ -35,7 +36,41 @@ from transformers import (
     Seq2SeqTrainer,
     Seq2SeqTrainingArguments,
     EarlyStoppingCallback,
+    TrainerCallback,
 )
+
+
+def write_json_atomic(path, payload):
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    temporary.replace(path)
+
+
+class AdminProgressCallback(TrainerCallback):
+    """Publish progress and honour a safe file-based stop request."""
+
+    def __init__(self, progress_file, stop_file):
+        self.progress_file = progress_file
+        self.stop_file = stop_file
+        self.stopped = False
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        progress = int(min(94, (state.global_step / max(1, state.max_steps)) * 90 + 4))
+        write_json_atomic(self.progress_file, {
+            "phase": "Training candidate model", "progress": progress,
+            "epoch": round(float(state.epoch or 0), 2), "step": state.global_step,
+            "max_steps": state.max_steps, "metrics": logs or {},
+        })
+
+    def on_step_end(self, args, state, control, **kwargs):
+        if self.stop_file and self.stop_file.exists():
+            self.stopped = True
+            control.should_training_stop = True
+            control.should_save = True
+        return control
 
 
 class SyntheticMenuDataset(Dataset):
@@ -135,9 +170,15 @@ def main():
     parser.add_argument("--eval_test", action="store_true", help="Evaluate on test set after training")
     parser.add_argument("--no_gradient_checkpointing", action="store_true",
                          help="Disable gradient checkpointing (only if you have plenty of VRAM to spare - it trades compute for memory)")
+    parser.add_argument("--progress_file", help="Optional JSON progress file for the admin worker")
+    parser.add_argument("--stop_file", help="Stop gracefully when this file appears")
+    parser.add_argument("--result_file", help="Write baseline/candidate metrics as JSON")
     args = parser.parse_args()
 
     dataset_dir = Path(args.dataset_dir).resolve()
+    progress_file = Path(args.progress_file).resolve() if args.progress_file else None
+    stop_file = Path(args.stop_file).resolve() if args.stop_file else None
+    result_file = Path(args.result_file).resolve() if args.result_file else None
     manifest_path = dataset_dir / "manifest.csv"
     if not manifest_path.exists():
         raise FileNotFoundError(f"Manifest file not found: {manifest_path}")
@@ -167,7 +208,13 @@ def main():
         print(f"  GPU: {torch.cuda.get_device_name(0)}")
 
     print(f"\nLoading base model: {args.base_checkpoint}")
-    processor = TrOCRProcessor.from_pretrained(args.base_checkpoint)
+    base_checkpoint = Path(args.base_checkpoint)
+    processor_source = (
+        "microsoft/trocr-base-handwritten"
+        if base_checkpoint.is_dir() and not (base_checkpoint / "preprocessor_config.json").exists()
+        else args.base_checkpoint
+    )
+    processor = TrOCRProcessor.from_pretrained(processor_source)
     model = VisionEncoderDecoderModel.from_pretrained(args.base_checkpoint).to(device)
 
     model.config.decoder_start_token_id = processor.tokenizer.cls_token_id
@@ -228,14 +275,21 @@ def main():
     print(f"  Max epochs: {args.max_epochs}")
     print(f"  Early stopping patience: {args.early_stopping_patience}")
 
+    progress_callback = AdminProgressCallback(progress_file, stop_file)
     trainer = Seq2SeqTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         compute_metrics=make_compute_metrics(processor),
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=args.early_stopping_patience)],
+        callbacks=[EarlyStoppingCallback(early_stopping_patience=args.early_stopping_patience), progress_callback],
     )
+
+    test_dataset = SyntheticMenuDataset(test_rows, dataset_dir, processor, split_name="test") if test_rows else None
+    baseline_metrics = None
+    if test_dataset and len(test_dataset) > 0:
+        write_json_atomic(progress_file, {"phase": "Measuring the production model", "progress": 2})
+        baseline_metrics = trainer.evaluate(test_dataset, metric_key_prefix="baseline")
 
     print("\n" + "=" * 70)
     print("STARTING TRAINING")
@@ -244,6 +298,7 @@ def main():
         print(f"  CUDA memory allocated before training: {torch.cuda.memory_allocated(0) / 1024**2:.2f} MB")
     print()
 
+    write_json_atomic(progress_file, {"phase": "Training candidate model", "progress": 4})
     trainer.train()
 
     print("\n" + "=" * 70)
@@ -254,18 +309,36 @@ def main():
     processor.save_pretrained(output_dir)
     print(f"\nModel saved to: {output_dir}")
 
-    if args.eval_test and len(test_rows) > 0:
+    candidate_metrics = None
+    if args.eval_test and test_dataset and len(test_dataset) > 0:
         print("\n" + "=" * 70)
         print("EVALUATING ON TEST SET")
         print("=" * 70)
-        test_dataset = SyntheticMenuDataset(test_rows, dataset_dir, processor, split_name="test")
-        test_results = trainer.evaluate(test_dataset)
+        write_json_atomic(progress_file, {"phase": "Comparing production and candidate", "progress": 96})
+        test_results = trainer.evaluate(test_dataset, metric_key_prefix="candidate")
+        candidate_metrics = test_results
 
-        cer = test_results.get("eval_cer")
-        wer = test_results.get("eval_wer")
+        cer = test_results.get("candidate_cer")
+        wer = test_results.get("candidate_wer")
         print("\nTest set results:")
         print(f"  CER: {cer:.4f}" if isinstance(cer, (int, float)) else f"  CER: {cer}")
         print(f"  WER: {wer:.4f}" if isinstance(wer, (int, float)) else f"  WER: {wer}")
+
+    baseline_cer = (baseline_metrics or {}).get("baseline_cer")
+    baseline_wer = (baseline_metrics or {}).get("baseline_wer")
+    candidate_cer = (candidate_metrics or {}).get("candidate_cer")
+    candidate_wer = (candidate_metrics or {}).get("candidate_wer")
+    comparable = all(isinstance(value, (int, float)) for value in [baseline_cer, baseline_wer, candidate_cer, candidate_wer])
+    better = comparable and candidate_cer < baseline_cer and candidate_wer <= baseline_wer
+    result = {
+        "stopped": progress_callback.stopped,
+        "baseline": baseline_metrics,
+        "candidate": candidate_metrics,
+        "recommendation": "promote" if better else "keep-production",
+        "candidate_path": str(output_dir.resolve()),
+    }
+    write_json_atomic(result_file, result)
+    write_json_atomic(progress_file, {"phase": "Comparison complete", "progress": 100, "result": result})
 
     print("\n" + "=" * 70)
     print("NEXT STEPS")

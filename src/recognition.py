@@ -44,6 +44,17 @@ _device = None
 _model_lock = threading.Lock()  # thread-safe initialization
 
 
+def reset_recognition_model():
+    """Release the cached model so the next scan loads the active pointer."""
+    global _processor, _model, _device
+    with _model_lock:
+        _processor = None
+        _model = None
+        _device = None
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+
 def _get_model():
     """Load the TrOCR processor + model once and reuse across calls.
 
