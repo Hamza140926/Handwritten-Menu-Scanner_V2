@@ -87,7 +87,14 @@ def _get_detector():
                     # support [...]" on CPU inference with MKL-DNN enabled (the
                     # default). See: github.com/PaddlePaddle/Paddle/issues/77340
                     logger.info("Initializing PaddleOCR text detector", extra={"model": cfg.model_name})
-                    _detector = TextDetection(model_name=cfg.model_name, enable_mkldnn=cfg.enable_mkldnn)
+                    # PaddleOCR detection intentionally defaults to CPU. Passing
+                    # the device explicitly prevents a GPU-capable wheel from
+                    # choosing CUDA on a machine where it is not usable.
+                    _detector = TextDetection(
+                        model_name=cfg.model_name,
+                        device=cfg.device,
+                        enable_mkldnn=cfg.enable_mkldnn,
+                    )
                     logger.info("PaddleOCR text detector loaded successfully")
                 except Exception as e:
                     logger.exception("Failed to load PaddleOCR detector")

@@ -79,11 +79,24 @@ def _get_model():
                     
                     cfg = get_config().recognition
                     
-                    # Auto device selection: "auto" means try CUDA first, fallback to CPU
-                    if cfg.device == "auto":
+                    # The environment override is useful for deployment, while
+                    # "auto" keeps the local behavior: CUDA when it is actually
+                    # usable, otherwise CPU. A requested but unavailable CUDA
+                    # device must never prevent inference from starting.
+                    requested_device = os.getenv("SCANTOSEE_TORCH_DEVICE", cfg.device).strip().lower()
+                    if requested_device == "auto":
                         _device = "cuda" if torch.cuda.is_available() else "cpu"
+                    elif requested_device == "cuda" and not torch.cuda.is_available():
+                        logger.warning("CUDA was requested but is unavailable; falling back to CPU")
+                        _device = "cpu"
+                    elif requested_device in {"cpu", "cuda"}:
+                        _device = requested_device
                     else:
-                        _device = cfg.device
+                        logger.warning(
+                            "Unknown SCANTOSEE_TORCH_DEVICE; using automatic selection",
+                            extra={"requested_device": requested_device},
+                        )
+                        _device = "cuda" if torch.cuda.is_available() else "cpu"
                     
                     logger.info("Loading TrOCR model", extra={"checkpoint": cfg.model_checkpoint, "device": _device})
 
@@ -106,10 +119,21 @@ def _get_model():
                         _processor = TrOCRProcessor.from_pretrained(cfg.model_checkpoint)
                         _model = VisionEncoderDecoderModel.from_pretrained(cfg.model_checkpoint)
 
-                    if _device == "cuda" and cfg.use_fp16_on_gpu:
-                        _model = _model.half().to(_device)
-                    else:
-                        _model = _model.to(_device)
+                    try:
+                        if _device == "cuda" and cfg.use_fp16_on_gpu:
+                            _model = _model.half().to(_device)
+                        else:
+                            _model = _model.to(_device)
+                    except (RuntimeError, OSError) as device_error:
+                        if _device != "cuda":
+                            raise
+                        logger.warning(
+                            "CUDA model initialization failed; retrying inference on CPU",
+                            extra={"error": str(device_error)},
+                        )
+                        _device = "cpu"
+                        _model = _model.float().to("cpu")
+                        torch.cuda.empty_cache()
                     _model.eval()
 
                     logger.info("TrOCR model loaded successfully", extra={"checkpoint": cfg.model_checkpoint, "device": _device})
@@ -201,6 +225,9 @@ def recognize_regions(regions: list, batch_size: int = None) -> list:
         
         logger.debug("Starting recognition", extra={"region_count": len(regions), "batch_size": batch_size})
         processor, model, device = _get_model()
+        if device == "cpu":
+            # Keep CPU memory bounded on machines without a discrete GPU.
+            batch_size = min(batch_size, 4)
         results = [None] * len(regions)
 
         for start in range(0, len(regions), batch_size):
