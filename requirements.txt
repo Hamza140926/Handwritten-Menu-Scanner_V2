@@ -4,9 +4,11 @@
 # Tested on Windows with CUDA 13.0
 
 # Deep Learning
-transformers==4.46.3
-huggingface-hub>=0.23.2,<1.0
-torch==2.13.0
+transformers==4.45.0
+huggingface-hub==0.36.2
+# This is the version used by the currently working local inference environment.
+# The deployment installer chooses the official CUDA 12.4 or CPU wheel index.
+torch==2.5.1
 sentencepiece==0.2.2
 
 # Computer Vision
@@ -16,17 +18,18 @@ pillow==11.0.0
 # OCR
 paddleocr==3.7.0
 paddlepaddle==3.3.1
+paddlex==3.7.2
 
 # Numerical Computing
 numpy==2.1.3
 scipy==1.14.1  # Hungarian algorithm for global optimization pairing
 
 # System Utilities
-psutil==5.9.5
+psutil==6.1.0
 
 # HTTP API and training-data object storage
-fastapi>=0.115,<1.0
-uvicorn[standard]>=0.32,<1.0
-python-multipart>=0.0.17,<1.0
-cloudinary>=1.41,<2.0
-python-dotenv>=1.0,<2.0
+fastapi==0.141.1
+uvicorn[standard]==0.52.1
+python-multipart==0.0.32
+cloudinary==1.45.0
+python-dotenv==1.2.2
